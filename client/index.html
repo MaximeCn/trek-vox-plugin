@@ -1,0 +1,1882 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Vox - Voting</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg-page: #f6f6f7;
+            --bg-card: #ffffff;
+            --bg-hover: rgba(0, 0, 0, 0.03);
+            --bg-sunken: #f2f2f4;
+            --text-primary: #111827;
+            --text-secondary: #374151;
+            --text-muted: #6b7280;
+            --text-faint: #9ca3af;
+            --border-faint: rgba(0, 0, 0, 0.08);
+            --accent: #111827;
+            --accent-text: #ffffff;
+            --accent-hover: #1f2937;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #b45309;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-card: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
+            --font-system: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --bg-page: #0d0d10;
+            --bg-card: #131316;
+            --bg-hover: rgba(255, 255, 255, 0.06);
+            --bg-sunken: #1a1a1f;
+            --text-primary: #f4f4f5;
+            --text-secondary: #d4d4d8;
+            --text-muted: #a1a1aa;
+            --text-faint: #71717a;
+            --border-faint: rgba(255, 255, 255, 0.09);
+            --accent: #e4e4e7;
+            --accent-text: #09090b;
+            --accent-hover: #d4d4d8;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --shadow-card: 0 1px 3px rgba(0, 0, 0, .4), 0 1px 2px rgba(0, 0, 0, .3);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) {
+                color-scheme: dark;
+                --bg-page: #0d0d10;
+                --bg-card: #131316;
+                --bg-hover: rgba(255, 255, 255, 0.06);
+                --bg-sunken: #1a1a1f;
+                --text-primary: #f4f4f5;
+                --text-secondary: #d4d4d8;
+                --text-muted: #a1a1aa;
+                --text-faint: #71717a;
+                --border-faint: rgba(255, 255, 255, 0.09);
+                --accent: #e4e4e7;
+                --accent-text: #09090b;
+                --accent-hover: #d4d4d8;
+                --success: #22c55e;
+                --danger: #ef4444;
+                --warning: #f59e0b;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        body {
+            font-family: var(--font-system);
+            background: var(--bg-page);
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.45;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #root {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            flex-shrink: 0;
+        }
+
+        .appbar {
+            flex: none;
+            background: var(--bg-page);
+            border-bottom: 1px solid var(--border-faint);
+        }
+
+        #scroller {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .wrapmax {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 18px;
+        }
+
+        .appbar .wrapmax {
+            padding-top: 18px;
+        }
+
+        #scroller .wrapmax {
+            padding-top: 16px;
+            padding-bottom: 44px;
+        }
+
+        #panel {
+            height: 100vh;
+        }
+
+        .hdr {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .hdr .mark {
+            width: 34px;
+            height: 34px;
+            color: var(--accent);
+            flex: none;
+        }
+
+        .hdr h1 {
+            font-size: 19px;
+            font-weight: 650;
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+
+        .hdr .sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding-bottom: 12px;
+        }
+
+        .tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 12px;
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            background: none;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 550;
+            cursor: pointer;
+            transition: all .18s;
+        }
+
+        .tab svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .tab:hover {
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+        }
+
+        .tab[aria-selected="true"] {
+            background: var(--accent);
+            color: var(--accent-text);
+        }
+
+        .tab:not(:disabled):active {
+            transform: scale(.97);
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-faint);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .card h2 {
+            font-size: 14px;
+            font-weight: 650;
+            margin: 0 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card h2 svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .action-buttons {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+            margin-left: 4px;
+        }
+
+        .action-buttons .btn-edit,
+        .action-buttons .btn-delete {
+            background: none;
+            border: none;
+            color: var(--text-faint);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            transition: all .18s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
+            font-size: 0;
+            line-height: 1;
+        }
+
+        .action-buttons .btn-edit svg,
+        .action-buttons .btn-delete svg {
+            width: 16px;
+            height: 16px;
+            display: block;
+            flex-shrink: 0;
+        }
+
+        .action-buttons .btn-edit:hover {
+            color: var(--accent);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .action-buttons .btn-delete:hover {
+            color: var(--danger);
+            background: rgba(220, 38, 38, .1);
+        }
+
+        .action-buttons .btn-edit:active,
+        .action-buttons .btn-delete:active {
+            transform: scale(.92);
+        }
+
+        .btn {
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--accent);
+            color: var(--accent-text);
+            padding: 8px 16px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .18s;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn:active {
+            transform: scale(.97);
+        }
+
+        .btn.sec {
+            background: none;
+            border: 1px solid var(--border-faint);
+            color: var(--text-secondary);
+        }
+
+        .btn.sec:hover {
+            background: var(--bg-hover);
+        }
+
+        .btn.danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn.danger:hover {
+            filter: brightness(0.9);
+        }
+
+        .btn.danger-outline {
+            background: none;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .btn.danger-outline:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn.sm {
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
+        .btn:disabled {
+            opacity: .5;
+            cursor: default;
+        }
+
+        .btn-add-place {
+            padding: 8px 10px;
+            flex: none;
+            min-width: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-add-place svg {
+            width: 16px;
+            height: 16px;
+            display: block;
+        }
+
+        input.fld, textarea.fld, select.fld {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-faint);
+            background: var(--bg-sunken);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        input.fld:focus, textarea.fld:focus, select.fld:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: -1px;
+        }
+
+        label.lbl {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 0 0 4px;
+            font-weight: 550;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .between {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .muted {
+            color: var(--text-muted);
+        }
+
+        .faint {
+            color: var(--text-faint);
+        }
+
+        .big {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .num {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+            font-size: 11.5px;
+        }
+
+        .chip.success {
+            background: rgba(22, 163, 74, .15);
+            color: var(--success);
+        }
+
+        .chip.warning {
+            background: rgba(180, 83, 9, .15);
+            color: var(--warning);
+        }
+
+        .chip.danger {
+            background: rgba(220, 38, 38, .15);
+            color: var(--danger);
+        }
+
+        .chip.accent {
+            background: rgba(var(--accent-rgb, 0, 0, 0), 0.1);
+            color: var(--accent);
+        }
+
+        .stars {
+            display: flex;
+            gap: 4px;
+        }
+
+        .star {
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-faint);
+            transition: all .15s;
+            user-select: none;
+        }
+
+        .star.on {
+            color: #fbbf24;
+        }
+
+        .star:hover {
+            transform: scale(1.15);
+        }
+
+        .activity-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-faint);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+            transition: transform .18s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .fab:active {
+            transform: scale(.92);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn .2s ease;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp .3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .vote-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
+            font-size: 13px;
+        }
+
+        .vote-item .voter {
+            color: var(--text-secondary);
+        }
+
+        .vote-item .voter-stars {
+            color: #fbbf24;
+            font-size: 13px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .loading {
+            color: var(--text-faint);
+            font-size: 13px;
+            padding: 24px 0;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-faint);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            display: inline-block;
+            animation: spin .7s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+        }
+
+        .progress {
+            height: 6px;
+            border-radius: 999px;
+            background: var(--bg-sunken);
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .progress > span {
+            display: block;
+            height: 100%;
+            background: var(--accent);
+            border-radius: 999px;
+            transition: width .3s;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+            align-items: center;
+        }
+
+        .filter-bar select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-bar .chip {
+            flex: none;
+        }
+
+        .delete-confirm {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: var(--bg-sunken);
+            border-radius: var(--radius-sm);
+        }
+
+        .delete-confirm .muted {
+            font-size: 12px;
+        }
+
+        .delete-confirm .btn {
+            font-size: 12px;
+            padding: 4px 12px;
+        }
+    </style>
+</head>
+<body>
+<div id="root" aria-live="polite"></div>
+<script>
+    "use strict";
+    (function () {
+        // ---- bridge ------------------------------------------------------------
+        var ctx = {theme: null, locale: 'en', userId: null};
+        var pending = {};
+        var reqSeq = 0;
+
+        function post(msg) {
+            window.parent.postMessage(msg, '*');
+        }
+
+        function invoke(sub, method, body) {
+            method = method || 'GET';
+            return new Promise(function (resolve, reject) {
+                var id = 'r' + (++reqSeq);
+                pending[id] = {resolve: resolve, reject: reject};
+                post({type: 'trek:invoke', requestId: id, sub: sub, method: method, body: body});
+            });
+        }
+
+        function notify(level, message) {
+            post({type: 'trek:notify', level: level, message: message});
+        }
+
+        window.addEventListener('message', function (e) {
+            var m = e.data;
+            if (!m || !m.type) return;
+            if (m.type === 'trek:context') {
+                applyContext(m);
+                return;
+            }
+            if (m.type === 'trek:response' && pending[m.requestId]) {
+                pending[m.requestId].resolve(m.data);
+                delete pending[m.requestId];
+                return;
+            }
+            if (m.type === 'trek:error' && pending[m.requestId]) {
+                var err = new Error(m.message || 'error');
+                err.code = m.code;
+                pending[m.requestId].reject(err);
+                delete pending[m.requestId];
+                return;
+            }
+        });
+
+        function resolveTheme(m) {
+            if (m && m.theme) return m.theme;
+            if (m && m.appearance && m.appearance.scheme) return m.appearance.scheme;
+            return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+
+        function applyContext(m) {
+            ctx.locale = (m.locale || 'en');
+            if (m.userId != null) ctx.userId = m.userId;
+            // Récupérer le tripId du contexte (pour trip-page)
+            if (m.tripId != null) {
+                state.currentTripId = m.tripId;
+            }
+            var theme = resolveTheme(m);
+            ctx.theme = theme;
+            document.documentElement.dataset.theme = theme;
+            applyTokens(m.tokens);
+            if (!booted) {
+                booted = true;
+                boot();
+            } else {
+                if (current) openTab(current, true);
+            }
+        }
+
+        // ---- Modal pour créer une activité TREK ----
+        function showCreateTrekModal(activityId, panel) {
+            var activity = state.activities.find(function (a) { return a.id === activityId; });
+            if (!activity) {
+                notify('error', 'Activity not found');
+                return;
+            }
+
+            // Récupérer le nom du lieu
+            var placeName = '';
+            if (activity.place_id) {
+                var place = state.places.find(function (p) { return String(p.id) === String(activity.place_id); });
+                if (place) {
+                    placeName = place.name || '';
+                }
+            }
+
+            var overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.onclick = function (e) { if (e.target === overlay) overlay.remove(); };
+
+            overlay.innerHTML =
+                '<div class="modal-content" onclick="event.stopPropagation();">' +
+                '<h3 style="margin-bottom:16px;">📅 Créer dans TREK</h3>' +
+
+                // Nom de l'activité (obligatoire)
+                '<div style="margin-bottom:14px">' +
+                '<label class="lbl">Nom de l\'activité *</label>' +
+                '<input class="fld" id="modal-trek-activity-name" placeholder="Activité" value="' + esc(activity.title) + '" />' +
+                '</div>' +
+
+                // Adresse (éditable)
+                '<div style="margin-bottom:14px">' +
+                '<label class="lbl">Adresse</label>' +
+                '<div class="row" style="gap:6px">' +
+                '<input class="fld" id="modal-trek-address" placeholder="Adresse du lieu" value="' + esc(placeName) + '" style="flex:1" />' +
+                '<button class="btn sec sm" id="modal-geocode-btn" title="Trouver les coordonnées automatiquement">📍</button>' +
+                '</div>' +
+                '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' +
+                '📍 Le géocodage est optionnel et ne bloque pas la création' +
+                '</div>' +
+                '</div>' +
+
+                // Coordonnées (éditables)
+                '<div style="margin-bottom:14px">' +
+                '<label class="lbl">Coordonnées (optionnel)</label>' +
+                '<div class="row" style="gap:6px">' +
+                '<input class="fld" id="modal-trek-lat" placeholder="Latitude" style="flex:1" />' +
+                '<input class="fld" id="modal-trek-lng" placeholder="Longitude" style="flex:1" />' +
+                '</div>' +
+                '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' +
+                'Laissez vide pour un géocodage automatique (si disponible)' +
+                '</div>' +
+                '</div>' +
+
+                // Site web (éditable)
+                '<div style="margin-bottom:14px">' +
+                '<label class="lbl">Site web</label>' +
+                '<input class="fld" id="modal-trek-website" placeholder="URL" value="' + esc(activity.url || '') + '" />' +
+                '</div>' +
+
+                // Notes (éditable)
+                '<div style="margin-bottom:14px">' +
+                '<label class="lbl">Notes (optionnel)</label>' +
+                '<textarea class="fld" id="modal-trek-notes" rows="2" placeholder="Notes pour l\'activité TREK...">' +
+                'Créé depuis Vox: ' + esc(activity.title) +
+                (placeName ? '\nLieu: ' + esc(placeName) : '') +
+                (activity.url ? '\nURL: ' + esc(activity.url) : '') +
+                '</textarea>' +
+                '</div>' +
+
+                // Indicateur de géocodage (optionnel, non bloquant)
+                '<div id="modal-geocode-status" style="display:none;margin-bottom:12px;padding:8px;border-radius:var(--radius-sm);font-size:12px"></div>' +
+
+                // Boutons
+                '<div class="row">' +
+                '<button class="btn sec" onclick="this.closest(\'.modal-overlay\').remove()">Annuler</button>' +
+                '<button class="btn" id="modal-create-trek" style="flex:1;background:var(--success);color:white">✅ Créer dans TREK</button>' +
+                '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+
+            // Références
+            var activityNameInput = overlay.querySelector('#modal-trek-activity-name');
+            var addressInput = overlay.querySelector('#modal-trek-address');
+            var latInput = overlay.querySelector('#modal-trek-lat');
+            var lngInput = overlay.querySelector('#modal-trek-lng');
+            var websiteInput = overlay.querySelector('#modal-trek-website');
+            var notesInput = overlay.querySelector('#modal-trek-notes');
+            var geocodeBtn = overlay.querySelector('#modal-geocode-btn');
+            var geocodeStatus = overlay.querySelector('#modal-geocode-status');
+            var createBtn = overlay.querySelector('#modal-create-trek');
+
+            // Validation du champ nom
+            function validateForm() {
+                var name = activityNameInput.value.trim();
+                createBtn.disabled = !name;
+                createBtn.style.opacity = name ? '1' : '0.5';
+            }
+
+            validateForm();
+            activityNameInput.oninput = validateForm;
+
+            // Fonction de géocodage via le proxy
+            function geocodeAddress(address) {
+                if (!address || address.trim() === '') {
+                    geocodeStatus.style.display = 'block';
+                    geocodeStatus.style.background = 'rgba(180, 83, 9, .15)';
+                    geocodeStatus.style.color = 'var(--warning)';
+                    geocodeStatus.textContent = '⚠️ Veuillez saisir une adresse à géocoder';
+                    return;
+                }
+
+                geocodeBtn.disabled = true;
+                geocodeBtn.textContent = '⏳';
+                geocodeStatus.style.display = 'block';
+                geocodeStatus.style.background = 'rgba(22, 163, 74, .15)';
+                geocodeStatus.style.color = 'var(--success)';
+                geocodeStatus.textContent = '🔍 Recherche des coordonnées...';
+
+                // Appel au proxy serveur
+                invoke('/geocode?address=' + encodeURIComponent(address), 'GET')
+                    .then(function(result) {
+                        if (result.success) {
+                            latInput.value = result.lat.toFixed(6);
+                            lngInput.value = result.lng.toFixed(6);
+
+                            geocodeStatus.style.background = 'rgba(22, 163, 74, .15)';
+                            geocodeStatus.style.color = 'var(--success)';
+                            geocodeStatus.textContent = '✅ Coordonnées trouvées : ' +
+                                result.lat.toFixed(6) + ', ' +
+                                result.lng.toFixed(6);
+                        } else {
+                            geocodeStatus.style.background = 'rgba(220, 38, 38, .15)';
+                            geocodeStatus.style.color = 'var(--danger)';
+                            geocodeStatus.textContent = '⚠️ ' + (result.error || 'Aucune coordonnée trouvée');
+                        }
+                    })
+                    .catch(function(error) {
+                        // NE PAS BLOQUER - juste afficher un avertissement
+                        geocodeStatus.style.background = 'rgba(180, 83, 9, .15)';
+                        geocodeStatus.style.color = 'var(--warning)';
+                        geocodeStatus.textContent = '⚠️ Géocodage indisponible (continuez sans coordonnées)';
+                        console.warn('Geocoding error (non-blocking):', error);
+                    })
+                    .finally(function() {
+                        geocodeBtn.disabled = false;
+                        geocodeBtn.textContent = '📍';
+                    });
+            }
+
+            // Géocodage au clic
+            geocodeBtn.onclick = function() {
+                geocodeAddress(addressInput.value.trim());
+            };
+
+            // Géocodage automatique après un délai (non bloquant)
+            var geocodeTimeout = null;
+            addressInput.oninput = function() {
+                clearTimeout(geocodeTimeout);
+                geocodeTimeout = setTimeout(function() {
+                    var address = addressInput.value.trim();
+                    if (address && !latInput.value && !lngInput.value) {
+                        geocodeAddress(address);
+                    }
+                }, 2000); // Délai plus long pour éviter trop de requêtes
+            };
+
+            // Soumission - TOUJOURS possible même sans coordonnées
+            createBtn.onclick = function() {
+                var activityName = activityNameInput.value.trim();
+
+                if (!activityName) {
+                    notify('warning', '⚠️ Le nom de l\'activité est requis');
+                    activityNameInput.focus();
+                    return;
+                }
+
+                // Construire le payload (coordonnées optionnelles)
+                var payload = {
+                    voxActivityId: activityId,
+                    activityName: activityName,
+                    notes: notesInput.value.trim(),
+                    address: addressInput.value.trim(),
+                    website: websiteInput.value.trim()
+                };
+
+                // Ajouter les coordonnées SI présentes
+                var lat = latInput.value.trim();
+                var lng = lngInput.value.trim();
+                if (lat && lng) {
+                    payload.lat = parseFloat(lat);
+                    payload.lng = parseFloat(lng);
+                }
+
+                // Désactiver le bouton
+                createBtn.disabled = true;
+                createBtn.textContent = '⏳ Création...';
+
+                invoke('/create-trek-activity', 'POST', payload)
+                    .then(function (result) {
+                        overlay.remove();
+                        var message = result.message || '✅ Activité créée dans TREK !';
+                        if (result.placeData && result.placeData.geocoded) {
+                            message += ' 📍 Coordonnées trouvées !';
+                        }
+                        notify('success', message);
+                        loadData().then(function () {
+                            renderRanking(panel);
+                        });
+                    })
+                    .catch(function (e) {
+                        // Même en cas d'erreur de géocodage, on continue
+                        notify('error', 'Erreur: ' + e.message);
+                        createBtn.disabled = false;
+                        createBtn.textContent = '✅ Créer dans TREK';
+                    });
+            };
+
+            // Focus
+            setTimeout(function () {
+                activityNameInput.focus();
+                activityNameInput.select();
+            }, 100);
+        }
+
+        function applyTokens(tokens) {
+            if (!tokens || typeof tokens !== 'object') return;
+            var root = document.documentElement;
+            Object.keys(tokens).forEach(function (k) {
+                var v = tokens[k];
+                if (v == null) return;
+                var name = k.charAt(0) === '-' ? k : ('--' + k);
+                try {
+                    root.style.setProperty(name, String(v));
+                } catch (_) {
+                }
+            });
+        }
+
+        // ---- icons ------------------------------------------------------------
+        var ICON = {
+            vote: '<circle cx="12" cy="12" r="9"/><polygon points="16.2 7.8 13.4 13.4 7.8 16.2 10.6 10.6 16.2 7.8"/>',
+            list: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="15" x2="15" y2="15"/>',
+            trophy: '<polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/>',
+            plus: '<path d="M12 5v14M5 12h14"/>',
+            trash: '<polyline points="3 4 5 4 21 4"/><path d="M8 4V2h8v2"/><path d="M19 4l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 4"/><path d="M10 9v6"/><path d="M14 9v6"/>',
+            user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+            place: '<path d="M12 22s-8-7.3-8-12a8 8 0 1 1 16 0c0 4.7-8 12-8 12z"/><circle cx="12" cy="10" r="3"/>',
+            edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>'
+        };
+
+        function svg(name, cls) {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+                'stroke-linecap="round" stroke-linejoin="round"' + (cls ? ' class="' + cls + '"' : '') + '>' + (ICON[name] || '') + '</svg>';
+        }
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c];
+            });
+        }
+
+        // ---- state ------------------------------------------------------------
+        var booted = false, current = null;
+        var root = document.getElementById('root');
+        var state = {
+            activities: [],
+            votes: {},
+            stats: {},
+            places: [],
+            selectedPlace: 'all',
+            currentTripId: null
+        };
+
+        var TABS = [
+            {id: 'activities', icon: 'list', label: 'Activities'},
+            {id: 'ranking', icon: 'trophy', label: 'Ranking'}
+        ];
+
+        // ---- boot -------------------------------------------------------------
+        function boot() {
+            root.innerHTML =
+                '<div class="appbar"><div class="wrapmax"><div class="hdr">' +
+                '<span class="mark">' + svg('trophy') + '</span>' +
+                '<div><h1>TREK x Vox</h1><div class="sub">Vote on activities</div></div>' +
+                '</div><div class="tabs" id="tabs" role="tablist"></div></div></div>' +
+                '<div id="scroller"><div class="wrapmax"><div id="panel"></div></div></div>';
+            renderTabs();
+            openTab('activities');
+        }
+
+        function renderTabs() {
+            var tabs = document.getElementById('tabs');
+            tabs.innerHTML = '';
+            TABS.forEach(function (t) {
+                var b = document.createElement('button');
+                b.className = 'tab';
+                b.type = 'button';
+                b.dataset.tab = t.id;
+                b.setAttribute('role', 'tab');
+                b.setAttribute('aria-selected', current === t.id ? 'true' : 'false');
+                b.innerHTML = svg(t.icon) + '<span>' + esc(t.label) + '</span>';
+                b.onclick = function () {
+                    openTab(t.id);
+                };
+                tabs.appendChild(b);
+            });
+        }
+
+        function openTab(id, force) {
+            current = id;
+            var btns = document.getElementById('tabs').querySelectorAll('.tab');
+            btns.forEach(function (b) {
+                b.setAttribute('aria-selected', b.dataset.tab === id ? 'true' : 'false');
+            });
+            var panel = document.getElementById('panel');
+            if (!force) {
+                var sc = document.getElementById('scroller');
+                if (sc) sc.scrollTop = 0;
+            }
+            panel.innerHTML = '<div class="loading"><span class="spinner"></span>Loading…</div>';
+            reportHeight();
+            var fn = SECTIONS[id];
+            Promise.resolve(fn(panel, force)).then(reportHeight).catch(function (e) {
+                panel.innerHTML = '<div class="card"><div class="muted">Could not load: ' + esc(e && e.message) + '</div></div>';
+                reportHeight();
+            });
+        }
+
+        // ---- height reporting --------------------------------------------------
+        var AVAIL_H = 0;
+
+        function availH() {
+            if (!AVAIL_H) AVAIL_H = Math.max(window.innerHeight || 700, 420);
+            return AVAIL_H;
+        }
+
+        function reportHeight() {
+            var appbar = document.querySelector('.appbar');
+            var panel = document.getElementById('panel');
+            var appH = appbar ? appbar.offsetHeight : 0;
+            var panelH = panel ? panel.getBoundingClientRect().height : 0;
+            var content = Math.ceil(appH + panelH) + 36;
+            post({type: 'trek:resize', height: Math.max(320, Math.min(content, availH()))});
+        }
+
+        window.addEventListener('resize', function () {
+            if (window.innerHeight > AVAIL_H) {
+                AVAIL_H = window.innerHeight;
+                reportHeight();
+            }
+        });
+        var _panelObserver = null;
+        if (window.ResizeObserver) {
+            try {
+                _panelObserver = new ResizeObserver(reportHeight);
+            } catch (_) {
+            }
+        }
+
+        function armPanelObserver() {
+            var pn = document.getElementById('panel');
+            if (_panelObserver && pn) {
+                try {
+                    _panelObserver.disconnect();
+                    _panelObserver.observe(pn);
+                } catch (_) {
+                }
+            }
+        }
+
+        // ---- data loading ------------------------------------------------------
+        function loadData() {
+            // Utiliser le tripId du contexte
+            var tripId = state.currentTripId ? '?tripId=' + state.currentTripId : '';
+
+            return invoke('/clean-orphaned-places', 'POST', { tripId: state.currentTripId })
+                .then(function(cleanResult) {
+                    console.log('🧹 Nettoyage des lieux orphelins:', cleanResult);
+
+                    // Puis charger les données
+                    return Promise.all([
+                        invoke('/activities' + tripId, 'GET').catch(function () { return []; }),
+                        invoke('/stats' + tripId, 'GET').catch(function () { return []; }),
+                        invoke('/places' + tripId, 'GET').catch(function () { return []; })
+                    ]);
+                })
+                .then(function (results) {
+                    state.activities = results[0] || [];
+                    state.stats = results[1] || [];
+                    state.places = results[2] || [];
+                    state.votes = {};
+                    var promises = state.activities.map(function (a) {
+                        return invoke('/votes?activityId=' + a.id, 'GET')
+                            .then(function (votes) { state.votes[a.id] = votes || []; })
+                            .catch(function () { state.votes[a.id] = []; });
+                    });
+                    return Promise.all(promises);
+                });
+
+            // D'abord, synchroniser les membres
+            return invoke('/sync-trip-members', 'POST', { tripId: state.currentTripId })
+                .then(function(syncResult) {
+                    console.log('👥 Membres synchronisés:', syncResult);
+
+                    // Puis charger les données
+                    return Promise.all([
+                        invoke('/activities' + tripId, 'GET').catch(function () { return []; }),
+                        invoke('/stats' + tripId, 'GET').catch(function () { return []; }),
+                        invoke('/places' + tripId, 'GET').catch(function () { return []; })
+                    ]);
+                })
+                .then(function (results) {
+                    state.activities = results[0] || [];
+                    state.stats = results[1] || [];
+                    state.places = results[2] || [];
+                    state.votes = {};
+                    var promises = state.activities.map(function (a) {
+                        return invoke('/votes?activityId=' + a.id, 'GET')
+                            .then(function (votes) { state.votes[a.id] = votes || []; })
+                            .catch(function () { state.votes[a.id] = []; });
+                    });
+                    return Promise.all(promises);
+                });
+
+            return Promise.all([
+                invoke('/activities' + tripId, 'GET').catch(function () {
+                    return [];
+                }),
+                invoke('/stats' + tripId, 'GET').catch(function () {
+                    return [];
+                }),
+                invoke('/places' + tripId, 'GET').catch(function () {
+                    return [];
+                })
+            ]).then(function (results) {
+                state.activities = results[0] || [];
+                state.stats = results[1] || [];
+                state.places = results[2] || [];
+                state.votes = {};
+                var promises = state.activities.map(function (a) {
+                    return invoke('/votes?activityId=' + a.id, 'GET')
+                        .then(function (votes) {
+                            state.votes[a.id] = votes || [];
+                        })
+                        .catch(function () {
+                            state.votes[a.id] = [];
+                        });
+                });
+                return Promise.all(promises);
+            });
+        }
+
+        // ---- sections ---------------------------------------------------------
+        var SECTIONS = {};
+
+        SECTIONS.activities = function (panel) {
+            return loadData().then(function () {
+                renderActivities(panel);
+            });
+        };
+
+        function getPlaceName(placeId) {
+            if (!placeId || placeId === 'all' || placeId === 'none') return 'No place';
+            var place = state.places.find(function (p) {
+                return String(p.id) === String(placeId);
+            });
+            return place ? place.name || place.title || 'Place ' + placeId : 'Unknown place';
+        }
+
+        function renderActivities(panel) {
+            var html = '';
+
+            // Place filter bar (pas de filtre trip car on est déjà sur un trip spécifique)
+            html += '<div class="filter-bar">';
+            html += '<select class="fld" id="place-filter">';
+            var selectedAll = state.selectedPlace === 'all' ? 'selected' : '';
+            var selectedNone = state.selectedPlace === 'none' ? 'selected' : '';
+            html += '<option value="all" ' + selectedAll + '>📍 All places</option>';
+            html += '<option value="none" ' + selectedNone + '>📌 No place</option>';
+            state.places.forEach(function (p) {
+                var selected = state.selectedPlace === String(p.id) ? 'selected' : '';
+                html += '<option value="' + esc(p.id) + '" ' + selected + '>' + esc(p.name || p.title || 'Place') + '</option>';
+            });
+            html += '</select>';
+            html += '</div>';
+
+            // Filter activities
+            var filtered = state.activities;
+            if (state.selectedPlace === 'none') {
+                filtered = filtered.filter(function (a) {
+                    return !a.place_id;
+                });
+            } else if (state.selectedPlace !== 'all') {
+                filtered = filtered.filter(function (a) {
+                    return String(a.place_id) === state.selectedPlace;
+                });
+            }
+
+            if (filtered.length === 0) {
+                html += '<div class="empty-state">' +
+                    '<div class="icon">🗳️</div>' +
+                    '<div style="font-size:16px;font-weight:600;margin-bottom:4px">No activities for this place</div>' +
+                    '<div class="muted">Click the + button to propose an activity</div>' +
+                    '</div>';
+            } else {
+                filtered.forEach(function (activity) {
+                    var votes = state.votes[activity.id] || [];
+                    var stats = state.stats.find(function (s) {
+                        return s.id === activity.id;
+                    });
+                    var userVote = votes.find(function (v) {
+                        return v.user_id === ctx.userId;
+                    });
+                    var avgScore = stats ? parseFloat(stats.avg_score || 0) : 0;
+                    var consensus = stats ? stats.consensus || 0 : 0;
+                    var participation = stats ? stats.participation || 0 : 0;
+                    var placeName = activity.place_id ? getPlaceName(activity.place_id) : '';
+
+                    html += '<div class="card" data-activity="' + activity.id + '">' +
+                        '<div class="between">' +
+                        '<div class="row">' +
+                        '<strong>' + esc(activity.title) + '</strong>' +
+                        (placeName ? ' <span class="chip" style="font-size:10px">📍 ' + esc(placeName) + '</span>' : '') +
+                        '<span class="action-buttons">' +
+                        '<button class="btn-edit" data-edit="' + activity.id + '" title="Edit activity">' + svg('edit') + '</button>' +
+                        '<button class="btn-delete" data-delete="' + activity.id + '" title="Delete activity">' + svg('trash') + '</button>' +
+                        '</span>' +
+                        '</div>' +
+                        '<div class="row">' +
+                        '<span class="chip">💯 ' + consensus + '%</span>' +
+                        '</div>' +
+                        '</div>';
+
+                    if (activity.description) {
+                        html += '<div class="muted" style="font-size:13px;margin-top:4px">' + esc(activity.description) + '</div>';
+                    }
+                    if (activity.url) {
+                        html += '<div style="margin-top:4px"><a href="' + esc(activity.url) + '" target="_self" style="color:var(--accent);font-size:12px" onclick="event.preventDefault(); window.open(\'' + esc(activity.url) + '\', \'_blank\')">🔗 Link</a></div>';
+                    }
+
+                    if (filtered.length > 0) {
+                        // Récupérer le nombre total de membres depuis les stats
+                        var totalMembers = state.stats.length > 0 ? state.stats[0].total_members || 0 : 0;
+
+                        // Afficher un indicateur en haut
+                        /*html += '<div class="filter-bar" style="justify-content:flex-end">' +
+                            '<span class="chip">👥 ' + totalMembers + ' members in trip</span>' +
+                            '</div>';*/
+                    }
+
+                    html += '<div class="row" style="margin-top:8px">' +
+                        '<div class="stars" data-activity="' + activity.id + '">' +
+                        [1, 2, 3, 4, 5].map(function (s) {
+                            var on = userVote && userVote.score >= s;
+                            return '<span class="star' + (on ? ' on' : '') + '" data-score="' + s + '">★</span>';
+                        }).join('') +
+                        '</div>' +
+                        '<span style="font-size:13px;color:var(--text-muted)">' + avgScore.toFixed(1) + '</span>' +
+                        '</div>' +
+                        '<div class="row" style="margin-top:4px;gap:12px;font-size:11px;color:var(--text-muted)">' +
+                        '<span>👥 ' + participation + '% participation (' + votes.length + '/' + (stats ? stats.total_members || 0 : 0) + ')</span>' +
+                        '<span>📊 ' + votes.length + ' votes</span>' +
+                        '</div>' +
+                        '<div class="progress"><span style="width:' + consensus + '%"></span></div>';
+
+                    if (votes.length > 0) {
+                        html += '<div style="margin-top:10px;border-top:1px solid var(--border-faint);padding-top:8px">';
+                        votes.slice(0, 5).forEach(function (v) {
+                            html += '<div class="vote-item">' +
+                                '<span class="voter">' + esc(v.display_name || v.username || '?') + '</span>' +
+                                '<span class="voter-stars">' + '★'.repeat(v.score) + '☆'.repeat(5 - v.score) + '</span>' +
+                                '</div>';
+                        });
+                        if (votes.length > 5) {
+                            html += '<div class="faint" style="font-size:11px">+' + (votes.length - 5) + ' more</div>';
+                        }
+                        html += '</div>';
+                    }
+
+                    html += '</div>';
+                });
+            }
+
+            panel.innerHTML = html;
+
+            // Place filter handler
+            var filterSelect = panel.querySelector('#place-filter');
+            if (filterSelect) {
+                filterSelect.onchange = function () {
+                    state.selectedPlace = this.value;
+                    renderActivities(panel);
+                };
+            }
+
+            // Star click handlers
+            panel.querySelectorAll('.stars').forEach(function (container) {
+                var activityId = parseInt(container.getAttribute('data-activity'), 10);
+                container.querySelectorAll('.star').forEach(function (star) {
+                    star.onclick = function () {
+                        var score = parseInt(star.getAttribute('data-score'), 10);
+                        vote(activityId, score, panel);
+                    };
+                });
+            });
+
+            // Edit handlers
+            panel.querySelectorAll('[data-edit]').forEach(function (btn) {
+                btn.onclick = function (e) {
+                    e.stopPropagation();
+                    var activityId = parseInt(btn.getAttribute('data-edit'), 10);
+                    showEditModal(activityId, panel);
+                };
+            });
+
+            // Delete handlers
+            panel.querySelectorAll('[data-delete]').forEach(function (btn) {
+                btn.onclick = function (e) {
+                    e.stopPropagation();
+                    var activityId = parseInt(btn.getAttribute('data-delete'), 10);
+                    showDeleteConfirm(activityId, panel);
+                };
+            });
+
+            addFab(panel);
+            armPanelObserver();
+        }
+
+        // ---- Delete with confirmation -------------------------------------------
+        function showDeleteConfirm(activityId, panel) {
+            var card = panel.querySelector('.card[data-activity="' + activityId + '"]');
+            if (!card) return;
+
+            var existing = card.querySelector('.delete-confirm');
+            if (existing) existing.remove();
+
+            var confirmDiv = document.createElement('div');
+            confirmDiv.className = 'delete-confirm';
+            confirmDiv.innerHTML =
+                '<span class="muted">⚠️ Delete this activity? This action cannot be undone.</span>' +
+                '<button class="btn danger sm" id="confirm-delete-' + activityId + '">Yes, delete</button>' +
+                '<button class="btn sec sm" id="cancel-delete-' + activityId + '">Cancel</button>';
+
+            card.appendChild(confirmDiv);
+
+            confirmDiv.querySelector('#confirm-delete-' + activityId).onclick = function () {
+                deleteActivity(activityId, panel);
+            };
+            confirmDiv.querySelector('#cancel-delete-' + activityId).onclick = function () {
+                confirmDiv.remove();
+            };
+        }
+
+        // ---- Delete -----------------------------------------------------------
+        function deleteActivity(activityId, panel) {
+            invoke('/activities?id=' + activityId, 'DELETE')
+                .then(function () {
+                    notify('success', 'Activity deleted');
+                    loadData().then(function () {
+                        renderActivities(panel);
+                    });
+                })
+                .catch(function (e) {
+                    notify('error', 'Failed to delete: ' + e.message);
+                });
+        }
+
+        // ---- Vote -------------------------------------------------------------
+        function vote(activityId, score, panel) {
+            var tripId = state.currentTripId ? '?tripId=' + state.currentTripId : '';
+            invoke('/vote', 'POST', {activityId: activityId, score: score})
+                .then(function () {
+                    return Promise.all([
+                        invoke('/votes?activityId=' + activityId, 'GET'),
+                        invoke('/stats' + tripId, 'GET')
+                    ]);
+                })
+                .then(function (results) {
+                    state.votes[activityId] = results[0] || [];
+                    state.stats = results[1] || [];
+                    notify('success', 'Vote submitted!');
+                    renderActivities(panel);
+                })
+                .catch(function (e) {
+                    notify('error', 'Failed to vote: ' + e.message);
+                });
+        }
+
+        // ---- Ranking section -------------------------------------------------
+        SECTIONS.ranking = function (panel) {
+            return loadData().then(function () {
+                renderRanking(panel);
+            });
+        };
+
+        function renderRanking(panel) {
+            var filtered = state.activities;
+            if (state.selectedPlace === 'none') {
+                filtered = filtered.filter(function (a) {
+                    return !a.place_id;
+                });
+            } else if (state.selectedPlace !== 'all') {
+                filtered = filtered.filter(function (a) {
+                    return String(a.place_id) === state.selectedPlace;
+                });
+            }
+
+            var sorted = filtered.slice().sort(function (a, b) {
+                var sa = state.stats.find(function (s) {
+                    return s.id === a.id;
+                });
+                var sb = state.stats.find(function (s) {
+                    return s.id === b.id;
+                });
+                return (sb ? sb.consensus || 0 : 0) - (sa ? sa.consensus || 0 : 0) ||
+                    (sb ? sb.avg_score || 0 : 0) - (sa ? sa.avg_score || 0 : 0);
+            });
+
+            var html = '<div class="card"><h2>' + svg('trophy') + 'Ranking</h2>';
+            html += '<div class="muted" style="font-size:12.5px;margin:-4px 0 12px">' +
+                'Activities ranked by consensus and average score' +
+                '</div>';
+
+            // Place filter bar for ranking (pas de filtre trip)
+            html += '<div class="filter-bar">';
+            html += '<select class="fld" id="rank-place-filter">';
+            var selectedAll = state.selectedPlace === 'all' ? 'selected' : '';
+            var selectedNone = state.selectedPlace === 'none' ? 'selected' : '';
+            html += '<option value="all" ' + selectedAll + '>📍 All places</option>';
+            html += '<option value="none" ' + selectedNone + '>📌 No place</option>';
+            state.places.forEach(function (p) {
+                var selected = state.selectedPlace === String(p.id) ? 'selected' : '';
+                html += '<option value="' + esc(p.id) + '" ' + selected + '>' + esc(p.name || p.title || 'Place') + '</option>';
+            });
+            html += '</select>';
+            html += '</div>';
+
+            if (sorted.length === 0) {
+                html += '<div class="faint">No activities for this place. Create one to start ranking!</div>';
+            } else {
+                sorted.forEach(function (activity, i) {
+                    var stats = state.stats.find(function (s) {
+                        return s.id === activity.id;
+                    });
+                    var medals = ['🥇', '🥈', '🥉'];
+                    var medal = medals[i] || '#' + (i + 1);
+                    var avg = stats ? parseFloat(stats.avg_score || 0) : 0;
+                    var consensus = stats ? stats.consensus || 0 : 0;
+                    var participation = stats ? stats.participation || 0 : 0;
+                    var placeName = activity.place_id ? getPlaceName(activity.place_id) : '';
+                    var hasTrekPlace = activity.trek_place_id ? true : false;
+
+                    html += '<div class="activity-item">' +
+                        '<div class="between">' +
+                        '<div class="row">' +
+                        '<span style="font-size:20px;font-weight:700;color:var(--accent);min-width:40px">' + medal + '</span>' +
+                        '<div><strong>' + esc(activity.title) + '</strong>' +
+                        (placeName ? ' <span class="chip" style="font-size:10px">📍 ' + esc(placeName) + '</span>' : '') +
+                        (hasTrekPlace ? ' <span class="chip success" style="font-size:10px">✅ TREK</span>' : '') +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="row">' +
+                        '<span class="chip">💯 ' + consensus + '%</span>' +
+                        '<span class="chip">⭐ ' + avg.toFixed(1) + '</span>' +
+                        // Bouton "Créer dans TREK"
+                        (hasTrekPlace ?
+                                '<button class="btn sec sm" disabled style="opacity:0.5" title="Déjà dans TREK">✅</button>' :
+                                '<button class="btn sm" data-create-trek="' + activity.id + '" style="background:var(--success);color:white">📅 Créer dans TREK</button>'
+                        ) +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="row" style="margin-top:4px;gap:12px;font-size:11px;color:var(--text-muted)">' +
+                        '<span>👥 ' + participation + '% participation</span>' +
+                        '<span>📊 ' + (stats ? stats.vote_count || 0 : 0) + ' votes</span>' +
+                        /*'<span class="chip" style="font-size:10px">👤 ' + (stats ? stats.total_members || 0 : 0) + ' members</span>' +*/
+                        '</div>' +
+                        '<div class="progress"><span style="width:' + consensus + '%"></span></div>' +
+                        '</div>';
+                });
+            }
+
+            html += '</div>';
+            panel.innerHTML = html;
+
+            // Place filter handler
+            var filterSelect = panel.querySelector('#rank-place-filter');
+            if (filterSelect) {
+                filterSelect.onchange = function () {
+                    state.selectedPlace = this.value;
+                    renderRanking(panel);
+                };
+            }
+
+            // Gestionnaire pour "Créer dans TREK"
+            panel.querySelectorAll('[data-create-trek]').forEach(function (btn) {
+                btn.onclick = function () {
+                    var activityId = parseInt(btn.getAttribute('data-create-trek'), 10);
+                    showCreateTrekModal(activityId, panel);
+                };
+            });
+
+            armPanelObserver();
+        }
+
+        // ---- FAB --------------------------------------------------------------
+        function addFab(panel) {
+            var existing = panel.querySelector('.fab');
+            if (existing) existing.remove();
+
+            var fab = document.createElement('button');
+            fab.className = 'fab';
+            fab.innerHTML = svg('plus');
+            fab.onclick = function () {
+                showCreateModal(panel);
+            };
+            panel.appendChild(fab);
+        }
+
+        // ---- create modal -----------------------------------------------------
+        function showCreateModal(panel) {
+            // Vérifier qu'on a un tripId
+            if (!state.currentTripId) {
+                notify('error', 'No trip selected');
+                return;
+            }
+
+            var overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.onclick = function (e) {
+                if (e.target === overlay) overlay.remove();
+            };
+
+            var placeOptions = '';
+            state.places.forEach(function (p) {
+                placeOptions += '<option value="' + esc(p.id) + '">' + esc(p.name || p.title || 'Place') + '</option>';
+            });
+
+            overlay.innerHTML =
+                '<div class="modal-content" onclick="event.stopPropagation();">' +
+                '<h3 style="margin-bottom:16px;">Propose an Activity</h3>' +
+                '<div style="margin-bottom:14px">' +
+                '<label class="lbl">Title *</label>' +
+                '<input class="fld" id="modal-title" placeholder="What do you want to do?" />' +
+                '</div>' +
+                '<div style="margin-bottom:14px">' +
+                '<label class="lbl">Description</label>' +
+                '<textarea class="fld" id="modal-desc" rows="2" placeholder="Add some details..."></textarea>' +
+                '</div>' +
+                '<div style="margin-bottom:14px">' +
+                '<label class="lbl">Link (optional)</label>' +
+                '<input class="fld" id="modal-url" placeholder="https://..." />' +
+                '</div>' +
+                '<div style="margin-bottom:16px">' +
+                '<label class="lbl">Place</label>' +
+                '<div class="row" style="gap:6px">' +
+                '<select class="fld" id="modal-place" style="flex:1">' +
+                '<option value="">None</option>' +
+                placeOptions +
+                '</select>' +
+                '<button class="btn sec sm btn-add-place" id="modal-add-place" title="Add new place">' + svg('plus') + '</button>' +
+                '</div>' +
+                '<div id="modal-new-place-container" style="display:none;margin-top:8px">' +
+                '<div class="row" style="gap:6px">' +
+                '<input class="fld" id="modal-new-place-name" placeholder="New place name..." style="flex:1" />' +
+                '<button class="btn sm" id="modal-save-place">Save</button>' +
+                '<button class="btn sec sm" id="modal-cancel-place">Cancel</button>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="row">' +
+                '<button class="btn sec" onclick="this.closest(\'.modal-overlay\').remove()">Cancel</button>' +
+                '<button class="btn" id="modal-create" style="flex:1">Propose</button>' +
+                '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+
+            // Gestion de l'ajout de place
+            var addPlaceBtn = overlay.querySelector('#modal-add-place');
+            var newPlaceContainer = overlay.querySelector('#modal-new-place-container');
+            var newPlaceInput = overlay.querySelector('#modal-new-place-name');
+            var savePlaceBtn = overlay.querySelector('#modal-save-place');
+            var cancelPlaceBtn = overlay.querySelector('#modal-cancel-place');
+
+            addPlaceBtn.onclick = function () {
+                newPlaceContainer.style.display = 'block';
+                newPlaceInput.focus();
+                addPlaceBtn.disabled = true;
+            };
+
+            cancelPlaceBtn.onclick = function () {
+                newPlaceContainer.style.display = 'none';
+                newPlaceInput.value = '';
+                addPlaceBtn.disabled = false;
+            };
+
+            savePlaceBtn.onclick = function () {
+                var placeName = newPlaceInput.value.trim();
+                if (!placeName) {
+                    notify('warning', 'Please enter a place name');
+                    return;
+                }
+
+                // Utiliser le tripId du contexte
+                invoke('/places', 'POST', {name: placeName, trip_id: state.currentTripId})
+                    .then(function (newPlace) {
+                        state.places.push(newPlace);
+
+                        var select = overlay.querySelector('#modal-place');
+                        var option = document.createElement('option');
+                        option.value = newPlace.id;
+                        option.text = placeName;
+                        select.appendChild(option);
+                        select.value = newPlace.id;
+
+                        newPlaceContainer.style.display = 'none';
+                        newPlaceInput.value = '';
+                        addPlaceBtn.disabled = false;
+
+                        notify('success', 'Place created!');
+                    })
+                    .catch(function (e) {
+                        notify('error', 'Failed to create place: ' + e.message);
+                    });
+            };
+
+            newPlaceInput.onkeydown = function (e) {
+                if (e.key === 'Enter') {
+                    savePlaceBtn.click();
+                }
+                if (e.key === 'Escape') {
+                    cancelPlaceBtn.click();
+                }
+            };
+
+            // Création de l'activité
+            overlay.querySelector('#modal-create').onclick = function () {
+                var title = overlay.querySelector('#modal-title').value.trim();
+                var description = overlay.querySelector('#modal-desc').value.trim();
+                var url = overlay.querySelector('#modal-url').value.trim();
+                var placeId = overlay.querySelector('#modal-place').value;
+
+                if (!title) {
+                    notify('warning', 'Please enter a title');
+                    return;
+                }
+
+                var payload = {
+                    title: title,
+                    description: description,
+                    url: url,
+                    trip_id: state.currentTripId
+                };
+                if (placeId) payload.place_id = parseInt(placeId, 10);
+
+                invoke('/activities', 'POST', payload)
+                    .then(function () {
+                        overlay.remove();
+                        notify('success', 'Activity proposed!');
+                        loadData().then(function () {
+                            renderActivities(panel);
+                        });
+                    })
+                    .catch(function (e) {
+                        notify('error', 'Failed to create: ' + e.message);
+                    });
+            };
+
+            setTimeout(function () {
+                var inp = overlay.querySelector('#modal-title');
+                if (inp) inp.focus();
+            }, 100);
+        }
+
+        // ---- Edit modal --------------------------------------------------------
+        function showEditModal(activityId, panel) {
+            var activity = state.activities.find(function (a) {
+                return a.id === activityId;
+            });
+            if (!activity) {
+                notify('error', 'Activity not found');
+                return;
+            }
+
+            var overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.onclick = function (e) {
+                if (e.target === overlay) overlay.remove();
+            };
+
+            var placeOptions = '';
+            state.places.forEach(function (p) {
+                var selected = activity.place_id && String(p.id) === String(activity.place_id) ? 'selected' : '';
+                placeOptions += '<option value="' + esc(p.id) + '" ' + selected + '>' + esc(p.name || p.title || 'Place') + '</option>';
+            });
+
+            overlay.innerHTML =
+                '<div class="modal-content" onclick="event.stopPropagation();">' +
+                '<h3 style="margin-bottom:16px;">Edit Activity</h3>' +
+                '<div style="margin-bottom:14px">' +
+                '<label class="lbl">Title *</label>' +
+                '<input class="fld" id="modal-edit-title" value="' + esc(activity.title) + '" placeholder="What do you want to do?" />' +
+                '</div>' +
+                '<div style="margin-bottom:14px">' +
+                '<label class="lbl">Description</label>' +
+                '<textarea class="fld" id="modal-edit-desc" rows="2" placeholder="Add some details...">' + esc(activity.description || '') + '</textarea>' +
+                '</div>' +
+                '<div style="margin-bottom:14px">' +
+                '<label class="lbl">Link (optional)</label>' +
+                '<input class="fld" id="modal-edit-url" value="' + esc(activity.url || '') + '" placeholder="https://..." />' +
+                '</div>' +
+                '<div style="margin-bottom:16px">' +
+                '<label class="lbl">Place</label>' +
+                '<div class="row" style="gap:6px">' +
+                '<select class="fld" id="modal-edit-place" style="flex:1">' +
+                '<option value="">None</option>' +
+                placeOptions +
+                '</select>' +
+                '<button class="btn sec sm btn-add-place" id="modal-edit-add-place" title="Add new place">' + svg('plus') + '</button>' +
+                '</div>' +
+                '<div id="modal-edit-new-place-container" style="display:none;margin-top:8px">' +
+                '<div class="row" style="gap:6px">' +
+                '<input class="fld" id="modal-edit-new-place-name" placeholder="New place name..." style="flex:1" />' +
+                '<button class="btn sm" id="modal-edit-save-place">Save</button>' +
+                '<button class="btn sec sm" id="modal-edit-cancel-place">Cancel</button>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="row">' +
+                '<button class="btn sec" onclick="this.closest(\'.modal-overlay\').remove()">Cancel</button>' +
+                '<button class="btn" id="modal-edit-save" style="flex:1">Save Changes</button>' +
+                '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+
+            // Gestion de l'ajout de place
+            var addPlaceBtn = overlay.querySelector('#modal-edit-add-place');
+            var newPlaceContainer = overlay.querySelector('#modal-edit-new-place-container');
+            var newPlaceInput = overlay.querySelector('#modal-edit-new-place-name');
+            var savePlaceBtn = overlay.querySelector('#modal-edit-save-place');
+            var cancelPlaceBtn = overlay.querySelector('#modal-edit-cancel-place');
+
+            addPlaceBtn.onclick = function () {
+                newPlaceContainer.style.display = 'block';
+                newPlaceInput.focus();
+                addPlaceBtn.disabled = true;
+            };
+
+            cancelPlaceBtn.onclick = function () {
+                newPlaceContainer.style.display = 'none';
+                newPlaceInput.value = '';
+                addPlaceBtn.disabled = false;
+            };
+
+            savePlaceBtn.onclick = function () {
+                var placeName = newPlaceInput.value.trim();
+                if (!placeName) {
+                    notify('warning', 'Please enter a place name');
+                    return;
+                }
+
+                invoke('/places', 'POST', {name: placeName, trip_id: state.currentTripId})
+                    .then(function (newPlace) {
+                        state.places.push(newPlace);
+
+                        var select = overlay.querySelector('#modal-edit-place');
+                        var option = document.createElement('option');
+                        option.value = newPlace.id;
+                        option.text = placeName;
+                        select.appendChild(option);
+                        select.value = newPlace.id;
+
+                        newPlaceContainer.style.display = 'none';
+                        newPlaceInput.value = '';
+                        addPlaceBtn.disabled = false;
+
+                        notify('success', 'Place created!');
+                    })
+                    .catch(function (e) {
+                        notify('error', 'Failed to create place: ' + e.message);
+                    });
+            };
+
+            newPlaceInput.onkeydown = function (e) {
+                if (e.key === 'Enter') {
+                    savePlaceBtn.click();
+                }
+                if (e.key === 'Escape') {
+                    cancelPlaceBtn.click();
+                }
+            };
+
+            // Sauvegarde de l'activité modifiée
+            overlay.querySelector('#modal-edit-save').onclick = function () {
+                var title = overlay.querySelector('#modal-edit-title').value.trim();
+                var description = overlay.querySelector('#modal-edit-desc').value.trim();
+                var url = overlay.querySelector('#modal-edit-url').value.trim();
+                var placeId = overlay.querySelector('#modal-edit-place').value;
+
+                if (!title) {
+                    notify('warning', 'Please enter a title');
+                    return;
+                }
+
+                var payload = {
+                    id: activityId,
+                    title: title,
+                    description: description,
+                    url: url,
+                    trip_id: state.currentTripId
+                };
+                if (placeId) payload.place_id = parseInt(placeId, 10);
+
+                invoke('/activities', 'PUT', payload)
+                    .then(function () {
+                        overlay.remove();
+                        notify('success', 'Activity updated!');
+                        loadData().then(function () {
+                            renderActivities(panel);
+                        });
+                    })
+                    .catch(function (e) {
+                        notify('error', 'Failed to update: ' + e.message);
+                    });
+            };
+
+            setTimeout(function () {
+                var inp = overlay.querySelector('#modal-edit-title');
+                if (inp) inp.focus();
+                inp.select();
+            }, 100);
+        }
+
+        // ---- start ------------------------------------------------------------
+        post({type: 'trek:ready'});
+        setTimeout(function () {
+            if (!booted) {
+                ctx.theme = null;
+                document.documentElement.dataset.theme = resolveTheme({});
+                booted = true;
+                boot();
+            }
+
+            // Appeler la route de debug
+            /*invoke('/debug?tripId=' + state.currentTripId, 'GET')
+                .then(data => {
+                    console.log('🔍 DEBUG COMPLET:', data);
+                })
+                .catch(err => console.error('❌ Erreur:', err));*/
+        }, 800);
+    })();
+</script>
+</body>
+</html>

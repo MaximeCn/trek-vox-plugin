@@ -1,0 +1,31 @@
+{
+  "id": "vox",
+  "name": "Vox",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "icon": "Trophy",
+  "author": "MaximeCn",
+  "homepage": "",
+  "license": "MIT",
+  "description": "A collaborative voting plugin for TREK that helps groups decide on trip activities. Create events linked to trip locations, collect 1–5 ratings from participants, and automatically compute average scores and a participation-aware consensus index. A unified summary view highlights the most agreed-upon options per location with full vote transparency.",
+  "type": "trip-page",
+  "trek": ">=3.2.0 <4.0.0",
+  "nativeModules": false,
+  "permissions": [
+    "db:own",
+    "db:read:trips",
+    "db:read:users",
+    "db:write:places",
+    "http:outbound:nominatim.openstreetmap.org"
+  ],
+  "egress": [
+    "nominatim.openstreetmap.org"
+  ],
+  "settings": [],
+  "capabilities": {
+    "nav": {
+      "title": "Vox",
+      "icon": "Trophy"
+    }
+  }
+}
