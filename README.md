@@ -89,7 +89,7 @@ The plugin requires no additional configuration; it works out of the box after i
 
 MIT License
 
-Copyright (c) 2024 Maxime Cn
+Copyright (c) 2026 Maxime Cn
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
