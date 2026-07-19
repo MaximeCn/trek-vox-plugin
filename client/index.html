@@ -707,7 +707,7 @@
         function applyContext(m) {
             ctx.locale = (m.locale || 'en');
             if (m.userId != null) ctx.userId = m.userId;
-            // Récupérer le tripId du contexte (pour trip-page)
+            // Get tripId from context (for trip-page)
             if (m.tripId != null) {
                 state.currentTripId = m.tripId;
             }
@@ -723,7 +723,7 @@
             }
         }
 
-        // ---- Modal pour créer une activité TREK ----
+        // ---- Modal to create TREK activity ----
         function showCreateTrekModal(activityId, panel) {
             var activity = state.activities.find(function (a) { return a.id === activityId; });
             if (!activity) {
@@ -731,7 +731,7 @@
                 return;
             }
 
-            // Récupérer le nom du lieu
+            // Get place name
             var placeName = '';
             if (activity.place_id) {
                 var place = state.places.find(function (p) { return String(p.id) === String(activity.place_id); });
@@ -746,67 +746,67 @@
 
             overlay.innerHTML =
                 '<div class="modal-content" onclick="event.stopPropagation();">' +
-                '<h3 style="margin-bottom:16px;">📅 Créer dans TREK</h3>' +
+                '<h3 style="margin-bottom:16px;">📅 Create in TREK</h3>' +
 
-                // Nom de l'activité (obligatoire)
+                // Activity name (required)
                 '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Nom de l\'activité *</label>' +
-                '<input class="fld" id="modal-trek-activity-name" placeholder="Activité" value="' + esc(activity.title) + '" />' +
+                '<label class="lbl">Activity name *</label>' +
+                '<input class="fld" id="modal-trek-activity-name" placeholder="Activity" value="' + esc(activity.title) + '" />' +
                 '</div>' +
 
-                // Adresse (éditable)
+                // Address (editable)
                 '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Adresse</label>' +
+                '<label class="lbl">Address</label>' +
                 '<div class="row" style="gap:6px">' +
-                '<input class="fld" id="modal-trek-address" placeholder="Adresse du lieu" value="' + esc(placeName) + '" style="flex:1" />' +
-                '<button class="btn sec sm" id="modal-geocode-btn" title="Trouver les coordonnées automatiquement">📍</button>' +
+                '<input class="fld" id="modal-trek-address" placeholder="Place address" value="' + esc(placeName) + '" style="flex:1" />' +
+                '<button class="btn sec sm" id="modal-geocode-btn" title="Find coordinates automatically">📍</button>' +
                 '</div>' +
                 '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' +
-                '📍 Le géocodage est optionnel et ne bloque pas la création' +
+                '📍 Geocoding is optional and does not block creation' +
                 '</div>' +
                 '</div>' +
 
-                // Coordonnées (éditables)
+                // Coordinates (editable)
                 '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Coordonnées (optionnel)</label>' +
+                '<label class="lbl">Coordinates (optional)</label>' +
                 '<div class="row" style="gap:6px">' +
                 '<input class="fld" id="modal-trek-lat" placeholder="Latitude" style="flex:1" />' +
                 '<input class="fld" id="modal-trek-lng" placeholder="Longitude" style="flex:1" />' +
                 '</div>' +
                 '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' +
-                'Laissez vide pour un géocodage automatique (si disponible)' +
+                'Leave empty for automatic geocoding (if available)' +
                 '</div>' +
                 '</div>' +
 
-                // Site web (éditable)
+                // Website (editable)
                 '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Site web</label>' +
+                '<label class="lbl">Website</label>' +
                 '<input class="fld" id="modal-trek-website" placeholder="URL" value="' + esc(activity.url || '') + '" />' +
                 '</div>' +
 
-                // Notes (éditable)
+                // Notes (editable)
                 '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Notes (optionnel)</label>' +
-                '<textarea class="fld" id="modal-trek-notes" rows="2" placeholder="Notes pour l\'activité TREK...">' +
-                'Créé depuis Vox: ' + esc(activity.title) +
-                (placeName ? '\nLieu: ' + esc(placeName) : '') +
+                '<label class="lbl">Notes (optional)</label>' +
+                '<textarea class="fld" id="modal-trek-notes" rows="2" placeholder="Notes for TREK activity...">' +
+                'Created from Vox: ' + esc(activity.title) +
+                (placeName ? '\nPlace: ' + esc(placeName) : '') +
                 (activity.url ? '\nURL: ' + esc(activity.url) : '') +
                 '</textarea>' +
                 '</div>' +
 
-                // Indicateur de géocodage (optionnel, non bloquant)
+                // Geocoding indicator (optional, non-blocking)
                 '<div id="modal-geocode-status" style="display:none;margin-bottom:12px;padding:8px;border-radius:var(--radius-sm);font-size:12px"></div>' +
 
-                // Boutons
+                // Buttons
                 '<div class="row">' +
-                '<button class="btn sec" onclick="this.closest(\'.modal-overlay\').remove()">Annuler</button>' +
-                '<button class="btn" id="modal-create-trek" style="flex:1;background:var(--success);color:white">✅ Créer dans TREK</button>' +
+                '<button class="btn sec" onclick="this.closest(\'.modal-overlay\').remove()">Cancel</button>' +
+                '<button class="btn" id="modal-create-trek" style="flex:1;background:var(--success);color:white">✅ Create in TREK</button>' +
                 '</div>' +
                 '</div>';
 
             document.body.appendChild(overlay);
 
-            // Références
+            // References
             var activityNameInput = overlay.querySelector('#modal-trek-activity-name');
             var addressInput = overlay.querySelector('#modal-trek-address');
             var latInput = overlay.querySelector('#modal-trek-lat');
@@ -817,7 +817,7 @@
             var geocodeStatus = overlay.querySelector('#modal-geocode-status');
             var createBtn = overlay.querySelector('#modal-create-trek');
 
-            // Validation du champ nom
+            // Field validation
             function validateForm() {
                 var name = activityNameInput.value.trim();
                 createBtn.disabled = !name;
@@ -827,13 +827,13 @@
             validateForm();
             activityNameInput.oninput = validateForm;
 
-            // Fonction de géocodage via le proxy
+            // Geocoding via proxy
             function geocodeAddress(address) {
                 if (!address || address.trim() === '') {
                     geocodeStatus.style.display = 'block';
                     geocodeStatus.style.background = 'rgba(180, 83, 9, .15)';
                     geocodeStatus.style.color = 'var(--warning)';
-                    geocodeStatus.textContent = '⚠️ Veuillez saisir une adresse à géocoder';
+                    geocodeStatus.textContent = '⚠️ Please enter an address to geocode';
                     return;
                 }
 
@@ -842,9 +842,9 @@
                 geocodeStatus.style.display = 'block';
                 geocodeStatus.style.background = 'rgba(22, 163, 74, .15)';
                 geocodeStatus.style.color = 'var(--success)';
-                geocodeStatus.textContent = '🔍 Recherche des coordonnées...';
+                geocodeStatus.textContent = '🔍 Searching for coordinates...';
 
-                // Appel au proxy serveur
+                // Server proxy call
                 invoke('/geocode?address=' + encodeURIComponent(address), 'GET')
                     .then(function(result) {
                         if (result.success) {
@@ -853,20 +853,20 @@
 
                             geocodeStatus.style.background = 'rgba(22, 163, 74, .15)';
                             geocodeStatus.style.color = 'var(--success)';
-                            geocodeStatus.textContent = '✅ Coordonnées trouvées : ' +
+                            geocodeStatus.textContent = '✅ Coordinates found: ' +
                                 result.lat.toFixed(6) + ', ' +
                                 result.lng.toFixed(6);
                         } else {
                             geocodeStatus.style.background = 'rgba(220, 38, 38, .15)';
                             geocodeStatus.style.color = 'var(--danger)';
-                            geocodeStatus.textContent = '⚠️ ' + (result.error || 'Aucune coordonnée trouvée');
+                            geocodeStatus.textContent = '⚠️ ' + (result.error || 'No coordinates found');
                         }
                     })
                     .catch(function(error) {
-                        // NE PAS BLOQUER - juste afficher un avertissement
+                        // DON'T BLOCK - just show warning
                         geocodeStatus.style.background = 'rgba(180, 83, 9, .15)';
                         geocodeStatus.style.color = 'var(--warning)';
-                        geocodeStatus.textContent = '⚠️ Géocodage indisponible (continuez sans coordonnées)';
+                        geocodeStatus.textContent = '⚠️ Geocoding unavailable (continue without coordinates)';
                         console.warn('Geocoding error (non-blocking):', error);
                     })
                     .finally(function() {
@@ -875,12 +875,12 @@
                     });
             }
 
-            // Géocodage au clic
+            // Geocode on click
             geocodeBtn.onclick = function() {
                 geocodeAddress(addressInput.value.trim());
             };
 
-            // Géocodage automatique après un délai (non bloquant)
+            // Automatic geocoding after delay (non-blocking)
             var geocodeTimeout = null;
             addressInput.oninput = function() {
                 clearTimeout(geocodeTimeout);
@@ -889,20 +889,20 @@
                     if (address && !latInput.value && !lngInput.value) {
                         geocodeAddress(address);
                     }
-                }, 2000); // Délai plus long pour éviter trop de requêtes
+                }, 2000); // Longer delay to avoid too many requests
             };
 
-            // Soumission - TOUJOURS possible même sans coordonnées
+            // Submission - ALWAYS possible even without coordinates
             createBtn.onclick = function() {
                 var activityName = activityNameInput.value.trim();
 
                 if (!activityName) {
-                    notify('warning', '⚠️ Le nom de l\'activité est requis');
+                    notify('warning', '⚠️ Activity name is required');
                     activityNameInput.focus();
                     return;
                 }
 
-                // Construire le payload (coordonnées optionnelles)
+                // Build payload (coordinates optional)
                 var payload = {
                     voxActivityId: activityId,
                     activityName: activityName,
@@ -911,7 +911,7 @@
                     website: websiteInput.value.trim()
                 };
 
-                // Ajouter les coordonnées SI présentes
+                // Add coordinates IF present
                 var lat = latInput.value.trim();
                 var lng = lngInput.value.trim();
                 if (lat && lng) {
@@ -919,16 +919,16 @@
                     payload.lng = parseFloat(lng);
                 }
 
-                // Désactiver le bouton
+                // Disable button
                 createBtn.disabled = true;
-                createBtn.textContent = '⏳ Création...';
+                createBtn.textContent = '⏳ Creating...';
 
                 invoke('/create-trek-activity', 'POST', payload)
                     .then(function (result) {
                         overlay.remove();
-                        var message = result.message || '✅ Activité créée dans TREK !';
+                        var message = result.message || '✅ Activity created in TREK!';
                         if (result.placeData && result.placeData.geocoded) {
-                            message += ' 📍 Coordonnées trouvées !';
+                            message += ' 📍 Coordinates found!';
                         }
                         notify('success', message);
                         loadData().then(function () {
@@ -936,10 +936,10 @@
                         });
                     })
                     .catch(function (e) {
-                        // Même en cas d'erreur de géocodage, on continue
-                        notify('error', 'Erreur: ' + e.message);
+                        // Even in case of geocoding error, continue
+                        notify('error', 'Error: ' + e.message);
                         createBtn.disabled = false;
-                        createBtn.textContent = '✅ Créer dans TREK';
+                        createBtn.textContent = '✅ Create in TREK';
                     });
             };
 
@@ -1098,14 +1098,14 @@
 
         // ---- data loading ------------------------------------------------------
         function loadData() {
-            // Utiliser le tripId du contexte
+            // Use tripId from context
             var tripId = state.currentTripId ? '?tripId=' + state.currentTripId : '';
 
             return invoke('/clean-orphaned-places', 'POST', { tripId: state.currentTripId })
                 .then(function(cleanResult) {
-                    console.log('🧹 Nettoyage des lieux orphelins:', cleanResult);
+                    console.log('🧹 Cleaning orphaned places:', cleanResult);
 
-                    // Puis charger les données
+                    // Then load data
                     return Promise.all([
                         invoke('/activities' + tripId, 'GET').catch(function () { return []; }),
                         invoke('/stats' + tripId, 'GET').catch(function () { return []; }),
@@ -1125,12 +1125,12 @@
                     return Promise.all(promises);
                 });
 
-            // D'abord, synchroniser les membres
+            // First, synchronize members
             return invoke('/sync-trip-members', 'POST', { tripId: state.currentTripId })
                 .then(function(syncResult) {
-                    console.log('👥 Membres synchronisés:', syncResult);
+                    console.log('👥 Members synchronized:', syncResult);
 
-                    // Puis charger les données
+                    // Then load data
                     return Promise.all([
                         invoke('/activities' + tripId, 'GET').catch(function () { return []; }),
                         invoke('/stats' + tripId, 'GET').catch(function () { return []; }),
@@ -1198,7 +1198,7 @@
         function renderActivities(panel) {
             var html = '';
 
-            // Place filter bar (pas de filtre trip car on est déjà sur un trip spécifique)
+            // Place filter bar (no trip filter since we're already on a specific trip)
             html += '<div class="filter-bar">';
             html += '<select class="fld" id="place-filter">';
             var selectedAll = state.selectedPlace === 'all' ? 'selected' : '';
@@ -1267,10 +1267,10 @@
                     }
 
                     if (filtered.length > 0) {
-                        // Récupérer le nombre total de membres depuis les stats
+                        // Get total members from stats
                         var totalMembers = state.stats.length > 0 ? state.stats[0].total_members || 0 : 0;
 
-                        // Afficher un indicateur en haut
+                        // Display indicator at top
                         /*html += '<div class="filter-bar" style="justify-content:flex-end">' +
                             '<span class="chip">👥 ' + totalMembers + ' members in trip</span>' +
                             '</div>';*/
@@ -1448,7 +1448,7 @@
                 'Activities ranked by consensus and average score' +
                 '</div>';
 
-            // Place filter bar for ranking (pas de filtre trip)
+            // Place filter bar for ranking (no trip filter)
             html += '<div class="filter-bar">';
             html += '<select class="fld" id="rank-place-filter">';
             var selectedAll = state.selectedPlace === 'all' ? 'selected' : '';
@@ -1489,10 +1489,10 @@
                         '<div class="row">' +
                         '<span class="chip">💯 ' + consensus + '%</span>' +
                         '<span class="chip">⭐ ' + avg.toFixed(1) + '</span>' +
-                        // Bouton "Créer dans TREK"
+                        // "Create in TREK" button
                         (hasTrekPlace ?
-                                '<button class="btn sec sm" disabled style="opacity:0.5" title="Déjà dans TREK">✅</button>' :
-                                '<button class="btn sm" data-create-trek="' + activity.id + '" style="background:var(--success);color:white">📅 Créer dans TREK</button>'
+                                '<button class="btn sec sm" disabled style="opacity:0.5" title="Already in TREK">✅</button>' :
+                                '<button class="btn sm" data-create-trek="' + activity.id + '" style="background:var(--success);color:white">📅 Create in TREK</button>'
                         ) +
                         '</div>' +
                         '</div>' +
@@ -1518,7 +1518,7 @@
                 };
             }
 
-            // Gestionnaire pour "Créer dans TREK"
+            // Handler for "Create in TREK"
             panel.querySelectorAll('[data-create-trek]').forEach(function (btn) {
                 btn.onclick = function () {
                     var activityId = parseInt(btn.getAttribute('data-create-trek'), 10);
@@ -1545,7 +1545,7 @@
 
         // ---- create modal -----------------------------------------------------
         function showCreateModal(panel) {
-            // Vérifier qu'on a un tripId
+            // Check that we have a tripId
             if (!state.currentTripId) {
                 notify('error', 'No trip selected');
                 return;
@@ -1602,7 +1602,7 @@
 
             document.body.appendChild(overlay);
 
-            // Gestion de l'ajout de place
+            // Place addition handling
             var addPlaceBtn = overlay.querySelector('#modal-add-place');
             var newPlaceContainer = overlay.querySelector('#modal-new-place-container');
             var newPlaceInput = overlay.querySelector('#modal-new-place-name');
@@ -1628,7 +1628,7 @@
                     return;
                 }
 
-                // Utiliser le tripId du contexte
+                // Use tripId from context
                 invoke('/places', 'POST', {name: placeName, trip_id: state.currentTripId})
                     .then(function (newPlace) {
                         state.places.push(newPlace);
@@ -1660,7 +1660,7 @@
                 }
             };
 
-            // Création de l'activité
+            // Activity creation
             overlay.querySelector('#modal-create').onclick = function () {
                 var title = overlay.querySelector('#modal-title').value.trim();
                 var description = overlay.querySelector('#modal-desc').value.trim();
@@ -1761,7 +1761,7 @@
 
             document.body.appendChild(overlay);
 
-            // Gestion de l'ajout de place
+            // Place addition handling
             var addPlaceBtn = overlay.querySelector('#modal-edit-add-place');
             var newPlaceContainer = overlay.querySelector('#modal-edit-new-place-container');
             var newPlaceInput = overlay.querySelector('#modal-edit-new-place-name');
@@ -1818,7 +1818,7 @@
                 }
             };
 
-            // Sauvegarde de l'activité modifiée
+            // Save edited activity
             overlay.querySelector('#modal-edit-save').onclick = function () {
                 var title = overlay.querySelector('#modal-edit-title').value.trim();
                 var description = overlay.querySelector('#modal-edit-desc').value.trim();
@@ -1869,12 +1869,12 @@
                 boot();
             }
 
-            // Appeler la route de debug
+            // Call debug route
             /*invoke('/debug?tripId=' + state.currentTripId, 'GET')
                 .then(data => {
                     console.log('🔍 DEBUG COMPLET:', data);
                 })
-                .catch(err => console.error('❌ Erreur:', err));*/
+                .catch(err => console.error('❌ Error:', err));*/
         }, 800);
     })();
 </script>

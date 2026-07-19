@@ -51,14 +51,14 @@ function wrapHandler(fn) {
 async function getMemberCount(ctx, tripId) {
     try {
         const result = await ctx.db.query(
-                `SELECT COUNT(DISTINCT v.user_id) as count
+            `SELECT COUNT(DISTINCT v.user_id) as count
             FROM votes v
             JOIN activities a ON v.activity_id = a.id
             WHERE a.trip_id = ?`,
             [tripId]
         );
         const count = result[0]?.count || 0;
-        return Math.max(1, count); // Au moins 1 (l'utilisateur qui vote)
+        return Math.max(1, count); // At least 1 (the user who votes)
     } catch (e) {
         ctx.log.warn('Could not count voters', {error: e.message});
         return 1;
@@ -231,7 +231,7 @@ const routes = [
                     category_id: 6,
                     place_time: '',
                     end_time: '',
-                    notes: notes || `Créé depuis Vox: ${activity.title}`,
+                    notes: notes || `Created from Vox: ${activity.title}`,
                     transport_mode: 'walking'
                 };
 
@@ -287,7 +287,7 @@ const routes = [
                     voxActivityId: voxActivityId,
                     trekPlaceId: placeId,
                     tripId: tripId,
-                    message: placeId ? '✅ Activité TREK créée avec succès' : '⚠️ Lieu non créé',
+                    message: placeId ? '✅ TREK activity created successfully' : '⚠️ Place not created',
                     activityTitle: activity.title,
                     placeData: {
                         name: trekPlaceData.name,
@@ -308,7 +308,7 @@ const routes = [
 
                 // Même en cas d'erreur, on essaie de créer sans coordonnées
                 return json(500, {
-                    error: 'Erreur lors de la création: ' + e.message,
+                    error: 'Error during creation: ' + e.message,
                     code: e.code || 'UNKNOWN'
                 });
             }
@@ -782,7 +782,7 @@ const routes = [
                     avg_score: activity.avg_score || 0,
                     consensus: Math.round(consensus),
                     participation: participation,
-                    total_members: totalMembers // Ajouté pour référence
+                    total_members: totalMembers // Added for reference
                 };
             });
 
@@ -1151,25 +1151,25 @@ const routes = [
             // ---- 16. Suggestions ----
             results.suggestions = [];
             if (results.methods.meta?.possibleKeys?.members?.exists) {
-                results.suggestions.push('✅ Les membres sont dans ctx.meta avec la clé "members"');
+                results.suggestions.push('✅ Members are in ctx.meta with key "members"');
             }
             if (results.methods.meta?.possibleKeys?.participants?.exists) {
-                results.suggestions.push('✅ Les membres sont dans ctx.meta avec la clé "participants"');
+                results.suggestions.push('✅ Members are in ctx.meta with key "participants"');
             }
             if (results.methods.meta?.possibleKeys?.memberIds?.exists) {
-                results.suggestions.push('✅ Les membres sont dans ctx.meta avec la clé "memberIds"');
+                results.suggestions.push('✅ Members are in ctx.meta with key "memberIds"');
             }
             if (results.methods.meta?.possibleKeys?.memberCount?.exists) {
-                results.suggestions.push('✅ Le nombre de membres est dans ctx.meta avec la clé "memberCount"');
+                results.suggestions.push('✅ Member count is in ctx.meta with key "memberCount"');
             }
             if (results.methods.meta?.possibleKeys?.members_count?.exists) {
-                results.suggestions.push('✅ Le nombre de membres est dans ctx.meta avec la clé "members_count"');
+                results.suggestions.push('✅ Member count is in ctx.meta with key "members_count"');
             }
             if (results.methods.db?.uniqueVoters > 0) {
-                results.suggestions.push(`📊 ${results.methods.db.uniqueVoters} votants uniques dans la base de données`);
+                results.suggestions.push(`📊 ${results.methods.db.uniqueVoters} unique voters in database`);
             }
             if (results.methods.costs?.contributorCount > 0) {
-                results.suggestions.push(`💰 ${results.methods.costs.contributorCount} contributeurs dans le budget`);
+                results.suggestions.push(`💰 ${results.methods.costs.contributorCount} contributors in budget`);
             }
 
             return json(200, results);
