@@ -3,590 +3,665 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Vox - Voting</title>
+    <title>Vox</title>
+    <!-- trek:ui -->
     <style>
+        /* Everything below rides on the tokens the design kit applies from the
+           host, so the accent, high-contrast and dark mode follow TREK. Only
+           the amber of a vote is ours: it is not a host token. */
         :root {
-            color-scheme: light;
-            --bg-page: #f6f6f7;
-            --bg-card: #ffffff;
-            --bg-hover: rgba(0, 0, 0, 0.03);
-            --bg-sunken: #f2f2f4;
-            --text-primary: #111827;
-            --text-secondary: #374151;
-            --text-muted: #6b7280;
-            --text-faint: #9ca3af;
-            --border-faint: rgba(0, 0, 0, 0.08);
-            --accent: #111827;
-            --accent-text: #ffffff;
-            --accent-hover: #1f2937;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --warning: #b45309;
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --shadow-card: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
-            --font-system: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            --vox-vote: #d98a0b;
         }
 
         :root[data-theme="dark"] {
-            color-scheme: dark;
-            --bg-page: #0d0d10;
-            --bg-card: #131316;
-            --bg-hover: rgba(255, 255, 255, 0.06);
-            --bg-sunken: #1a1a1f;
-            --text-primary: #f4f4f5;
-            --text-secondary: #d4d4d8;
-            --text-muted: #a1a1aa;
-            --text-faint: #71717a;
-            --border-faint: rgba(255, 255, 255, 0.09);
-            --accent: #e4e4e7;
-            --accent-text: #09090b;
-            --accent-hover: #d4d4d8;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --shadow-card: 0 1px 3px rgba(0, 0, 0, .4), 0 1px 2px rgba(0, 0, 0, .3);
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root:not([data-theme]) {
-                color-scheme: dark;
-                --bg-page: #0d0d10;
-                --bg-card: #131316;
-                --bg-hover: rgba(255, 255, 255, 0.06);
-                --bg-sunken: #1a1a1f;
-                --text-primary: #f4f4f5;
-                --text-secondary: #d4d4d8;
-                --text-muted: #a1a1aa;
-                --text-faint: #71717a;
-                --border-faint: rgba(255, 255, 255, 0.09);
-                --accent: #e4e4e7;
-                --accent-text: #09090b;
-                --accent-hover: #d4d4d8;
-                --success: #22c55e;
-                --danger: #ef4444;
-                --warning: #f59e0b;
-            }
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
+            --vox-vote: #e8b34a;
         }
 
         body {
-            font-family: var(--font-system);
-            background: var(--bg-page);
-            color: var(--text-primary);
-            font-size: 14px;
-            line-height: 1.45;
-            -webkit-font-smoothing: antialiased;
+            margin: 0;
         }
 
-        #root {
-            height: 100vh;
+        .vox {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 18px 16px 56px;
             display: flex;
             flex-direction: column;
-            min-height: 0;
-            flex-shrink: 0;
+            gap: 14px;
         }
 
-        .appbar {
-            flex: none;
-            background: var(--bg-page);
-            border-bottom: 1px solid var(--border-faint);
-        }
-
-        #scroller {
-            flex: 1 1 auto;
-            min-height: 0;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .wrapmax {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 18px;
-        }
-
-        .appbar .wrapmax {
-            padding-top: 18px;
-        }
-
-        #scroller .wrapmax {
-            padding-top: 16px;
-            padding-bottom: 44px;
-        }
-
-        #panel {
-            height: 100vh;
-        }
-
-        .hdr {
+        /* --- header ------------------------------------------------------ */
+        .vox-head {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 12px;
-            margin-bottom: 16px;
+            flex-wrap: wrap;
         }
 
-        .hdr .mark {
-            width: 34px;
-            height: 34px;
-            color: var(--accent);
-            flex: none;
-        }
-
-        .hdr h1 {
+        .vox-head h1 {
             font-size: 19px;
             font-weight: 650;
-            margin: 0;
             letter-spacing: -0.01em;
+            margin: 0;
         }
 
-        .hdr .sub {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 1px;
+        .vox-head .grow {
+            flex: 1 1 auto;
+            min-width: 0;
         }
 
-        .tabs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            padding-bottom: 12px;
-        }
-
-        .tab {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 7px 12px;
-            border: 1px solid transparent;
-            border-radius: var(--radius-sm);
-            background: none;
-            color: var(--text-muted);
-            font-family: inherit;
+        .status {
             font-size: 12.5px;
-            font-weight: 550;
+            color: var(--text-muted, #888);
+            margin-top: 3px;
+        }
+
+        /* --- search + filters -------------------------------------------- */
+        .searchbar {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .searchbar input {
+            padding-left: 32px;
+            padding-right: 78px;
+        }
+
+        .searchbar .glyph {
+            position: absolute;
+            left: 11px;
+            font-size: 13px;
+            color: var(--text-faint, #aaa);
+            pointer-events: none;
+        }
+
+        .searchbar .count {
+            position: absolute;
+            right: 38px;
+            font-size: 11.5px;
+            color: var(--text-muted, #888);
+            font-variant-numeric: tabular-nums;
+            pointer-events: none;
+        }
+
+        .searchbar .clear {
+            position: absolute;
+            right: 8px;
+            appearance: none;
+            border: 0;
+            background: none;
+            color: var(--text-muted, #888);
+            font-size: 15px;
+            line-height: 1;
             cursor: pointer;
-            transition: all .18s;
+            padding: 4px 6px;
+            border-radius: var(--radius-sm, 6px);
         }
 
-        .tab svg {
-            width: 16px;
-            height: 16px;
+        .searchbar .clear:hover {
+            background: var(--bg-hover, rgba(128, 128, 128, .14));
         }
 
-        .tab:hover {
-            background: var(--bg-hover);
-            color: var(--text-secondary);
-        }
-
-        .tab[aria-selected="true"] {
-            background: var(--accent);
-            color: var(--accent-text);
-        }
-
-        .tab:not(:disabled):active {
-            transform: scale(.97);
-        }
-
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-faint);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-card);
-            padding: 16px;
-            margin-bottom: 14px;
-        }
-
-        .card h2 {
-            font-size: 14px;
-            font-weight: 650;
-            margin: 0 0 12px;
+        .controls {
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-faint, rgba(128, 128, 128, .2));
         }
 
-        .card h2 svg {
-            width: 18px;
-            height: 18px;
+        .controls select {
+            width: auto;
+            min-width: 156px;
         }
 
-        .action-buttons {
-            display: inline-flex;
-            align-items: center;
-            gap: 2px;
-            flex-shrink: 0;
+        /* A lens over the list, so its pressed state has to be unmistakable. */
+        .lens {
+            appearance: none;
+            font: inherit;
+            font-size: 12.5px;
+            font-weight: 550;
+            padding: 5px 11px;
+            border-radius: 999px;
+            cursor: pointer;
+            background: none;
+            color: var(--text-secondary, #555);
+            border: 1px solid var(--border-faint, rgba(128, 128, 128, .28));
+        }
+
+        .lens:hover {
+            background: var(--bg-hover, rgba(128, 128, 128, .1));
+        }
+
+        .lens[aria-pressed="true"] {
+            background: var(--accent, #333);
+            color: var(--accent-text, #fff);
+            border-color: transparent;
+        }
+
+        .lens .n {
+            opacity: .65;
+            font-variant-numeric: tabular-nums;
             margin-left: 4px;
         }
 
-        .action-buttons .btn-edit,
-        .action-buttons .btn-delete {
-            background: none;
-            border: none;
-            color: var(--text-faint);
-            cursor: pointer;
-            padding: 4px;
-            border-radius: var(--radius-sm);
-            transition: all .18s;
-            display: inline-flex;
+        /* --- section + area headings -------------------------------------- */
+        .band {
+            display: flex;
             align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            flex-shrink: 0;
-            font-size: 0;
-            line-height: 1;
-        }
-
-        .action-buttons .btn-edit svg,
-        .action-buttons .btn-delete svg {
-            width: 16px;
-            height: 16px;
-            display: block;
-            flex-shrink: 0;
-        }
-
-        .action-buttons .btn-edit:hover {
-            color: var(--accent);
-            background: rgba(0, 0, 0, 0.05);
-        }
-
-        .action-buttons .btn-delete:hover {
-            color: var(--danger);
-            background: rgba(220, 38, 38, .1);
-        }
-
-        .action-buttons .btn-edit:active,
-        .action-buttons .btn-delete:active {
-            transform: scale(.92);
-        }
-
-        .btn {
-            border: none;
-            border-radius: var(--radius-sm);
-            background: var(--accent);
-            color: var(--accent-text);
-            padding: 8px 16px;
-            font-family: inherit;
-            font-size: 13px;
+            gap: 10px;
+            font-size: 11px;
             font-weight: 600;
-            cursor: pointer;
-            transition: all .18s;
+            letter-spacing: 0.11em;
+            text-transform: uppercase;
+            color: var(--text-muted, #888);
+            margin-top: 6px;
         }
 
-        .btn:hover {
-            background: var(--accent-hover);
+        .band::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border-faint, rgba(128, 128, 128, .2));
         }
 
-        .btn:active {
-            transform: scale(.97);
-        }
-
-        .btn.sec {
-            background: none;
-            border: 1px solid var(--border-faint);
-            color: var(--text-secondary);
-        }
-
-        .btn.sec:hover {
-            background: var(--bg-hover);
-        }
-
-        .btn.danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn.danger:hover {
-            filter: brightness(0.9);
-        }
-
-        .btn.danger-outline {
-            background: none;
-            border: 1px solid var(--danger);
-            color: var(--danger);
-        }
-
-        .btn.danger-outline:hover {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn.sm {
-            padding: 4px 12px;
-            font-size: 12px;
-        }
-
-        .btn:disabled {
-            opacity: .5;
-            cursor: default;
-        }
-
-        .btn-add-place {
-            padding: 8px 10px;
-            flex: none;
-            min-width: 38px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-add-place svg {
-            width: 16px;
-            height: 16px;
-            display: block;
-        }
-
-        input.fld, textarea.fld, select.fld {
+        /* The whole point of the area row: decide whether to open it without
+           opening it. */
+        .area-head {
+            appearance: none;
             width: 100%;
-            padding: 8px 12px;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border-faint);
-            background: var(--bg-sunken);
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 13px;
+            text-align: left;
+            font: inherit;
+            background: none;
+            border: 0;
+            border-radius: var(--radius-sm, 6px);
+            padding: 7px 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: baseline;
+            gap: 9px;
+            flex-wrap: wrap;
+            color: var(--text-primary, #111);
         }
 
-        input.fld:focus, textarea.fld:focus, select.fld:focus {
-            outline: 2px solid var(--accent);
-            outline-offset: -1px;
+        .area-head:hover {
+            background: var(--bg-hover, rgba(128, 128, 128, .1));
         }
 
-        label.lbl {
-            display: block;
+        .area-head .caret {
+            font-size: 11px;
+            color: var(--text-secondary, #666);
+            width: 11px;
+            flex: none;
+        }
+
+        .area-head .nm {
+            font-size: 13.5px;
+            font-weight: 650;
+        }
+
+        .area-head .sum {
             font-size: 12px;
-            color: var(--text-muted);
-            margin: 0 0 4px;
-            font-weight: 550;
+            color: var(--text-muted, #888);
+            font-variant-numeric: tabular-nums;
         }
 
-        .row {
+        .area-head .todo {
+            color: var(--warning, #b45309);
+            font-weight: 600;
+        }
+
+        .list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .list.indent {
+            padding-left: 17px;
+        }
+
+        /* --- card -------------------------------------------------------- */
+        .act {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            padding: 12px 14px;
+        }
+
+        .act-top {
             display: flex;
             align-items: center;
             gap: 8px;
             flex-wrap: wrap;
         }
 
-        .between {
+        .act-name {
+            font-size: 14.5px;
+            font-weight: 600;
+            letter-spacing: -0.005em;
+        }
+
+        .act-note {
+            font-size: 12.5px;
+            color: var(--text-secondary, #666);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        /* One row carries the whole verdict: number, gauge, turnout, ballot. */
+        .verdict {
             display: flex;
             align-items: center;
-            justify-content: space-between;
             gap: 10px;
             flex-wrap: wrap;
         }
 
-        .wrap {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .muted {
-            color: var(--text-muted);
-        }
-
-        .faint {
-            color: var(--text-faint);
-        }
-
-        .big {
-            font-size: 28px;
+        .score {
+            font-size: 21px;
             font-weight: 700;
-        }
-
-        .num {
+            line-height: 1;
             font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
         }
 
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 3px 10px;
+        .score.none {
+            color: var(--text-faint, #999);
+        }
+
+        .gauge {
+            width: 74px;
+            height: 3px;
             border-radius: 999px;
-            background: var(--bg-hover);
-            color: var(--text-secondary);
-            font-size: 11.5px;
+            background: var(--bg-hover, rgba(128, 128, 128, .16));
+            overflow: hidden;
+            flex: none;
         }
 
-        .chip.success {
-            background: rgba(22, 163, 74, .15);
-            color: var(--success);
+        .gauge > i {
+            display: block;
+            height: 100%;
+            border-radius: 999px;
+            background: var(--vox-vote);
+            transition: width .25s ease;
         }
 
-        .chip.warning {
-            background: rgba(180, 83, 9, .15);
-            color: var(--warning);
+        .turnout {
+            appearance: none;
+            border: 0;
+            background: none;
+            padding: 0;
+            font: inherit;
+            font-size: 12.5px;
+            color: var(--text-muted, #888);
+            font-variant-numeric: tabular-nums;
+            cursor: pointer;
+            text-decoration: underline dotted;
+            text-underline-offset: 3px;
         }
 
-        .chip.danger {
-            background: rgba(220, 38, 38, .15);
-            color: var(--danger);
+        .turnout.plain {
+            cursor: default;
+            text-decoration: none;
         }
 
-        .chip.accent {
-            background: rgba(var(--accent-rgb, 0, 0, 0), 0.1);
-            color: var(--accent);
+        .waiting {
+            font-size: 12.5px;
+            color: var(--warning, #b45309);
+            font-weight: 550;
+        }
+
+        .verdict .spacer {
+            flex: 1 1 auto;
+        }
+
+        /* --- the vote control -------------------------------------------- */
+        .ballot {
+            display: flex;
+            align-items: center;
+            gap: 9px;
         }
 
         .stars {
-            display: flex;
-            gap: 4px;
+            display: inline-flex;
+            gap: 1px;
         }
 
         .star {
-            font-size: 24px;
+            appearance: none;
+            border: 0;
+            background: none;
+            padding: 1px;
+            font-size: 20px;
+            line-height: 1;
             cursor: pointer;
-            color: var(--text-faint);
-            transition: all .15s;
-            user-select: none;
+            color: var(--text-faint, #aaa);
+            transition: color .12s ease, transform .12s ease;
         }
 
         .star.on {
-            color: #fbbf24;
+            color: var(--vox-vote);
         }
 
         .star:hover {
-            transform: scale(1.15);
+            transform: scale(1.14);
         }
 
-        .activity-item {
-            padding: 12px;
-            border-bottom: 1px solid var(--border-faint);
+        .star:disabled {
+            cursor: default;
+            transform: none;
         }
 
-        .activity-item:last-child {
-            border-bottom: none;
-        }
+        /* The label is bound to the VALUE, not to the pointer: it follows the
+           hover on a desktop and states — then confirms — the choice on touch,
+           where there is no hover at all.
 
-        .fab {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            background: var(--accent);
-            color: var(--accent-text);
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
-            transition: transform .18s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-        }
-
-        .fab:active {
-            transform: scale(.92);
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            z-index: 1000;
-            animation: fadeIn .2s ease;
-        }
-
-        .modal-content {
-            background: var(--bg-card);
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-            padding: 24px;
-            max-width: 500px;
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: auto;
-            animation: slideUp .3s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(100%);
-            }
-            to {
-                transform: translateY(0);
-            }
-        }
-
-        .vote-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 3px 0;
-            font-size: 13px;
-        }
-
-        .vote-item .voter {
-            color: var(--text-secondary);
-        }
-
-        .vote-item .voter-stars {
-            color: #fbbf24;
-            font-size: 13px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-        }
-
-        .empty-state .icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-        }
-
-        .loading {
-            color: var(--text-faint);
-            font-size: 13px;
-            padding: 24px 0;
-            text-align: center;
-        }
-
-        .spinner {
-            width: 18px;
-            height: 18px;
-            border: 2px solid var(--border-faint);
-            border-top-color: var(--accent);
-            border-radius: 50%;
+           The slot is sized by an invisible copy of the LONGEST label, so the
+           pill never changes width as you sweep across the stars. Without it
+           the row's spacer gives way, the whole ballot slides sideways, and the
+           star under the cursor is no longer the one you meant to click. A
+           hidden twin beats a magic pixel width: it stays correct whatever font
+           and locale the host is in. */
+        .vlabel-slot {
+            position: relative;
             display: inline-block;
-            animation: spin .7s linear infinite;
-            vertical-align: middle;
-            margin-right: 8px;
+            flex: none;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
+        .vlabel {
+            font-size: 10.5px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: var(--radius-sm, 6px);
+            white-space: nowrap;
+            text-align: center;
+            color: var(--vox-vote);
+            background: rgba(217, 138, 11, .14);
+            background: color-mix(in srgb, var(--vox-vote) 14%, transparent);
+        }
+
+        .vlabel.ghost {
+            visibility: hidden;
+            pointer-events: none;
+            display: block;
+        }
+
+        .vlabel.live {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .vlabel.none {
+            color: var(--text-muted, #888);
+            background: var(--bg-hover, rgba(128, 128, 128, .12));
+        }
+
+        /* --- voter breakdown, on demand ----------------------------------- */
+        .breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding-top: 7px;
+            border-top: 1px solid var(--border-faint, rgba(128, 128, 128, .18));
+        }
+
+        .breakdown .vrow {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            font-size: 12.5px;
+        }
+
+        .breakdown .vrow .nm {
+            color: var(--text-secondary, #555);
+        }
+
+        .breakdown .vrow .sc {
+            margin-left: auto;
+            color: var(--vox-vote);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .breakdown .vrow.absent .nm,
+        .breakdown .vrow.absent .sc {
+            color: var(--text-faint, #aaa);
+            font-style: italic;
+            text-transform: none;
+            letter-spacing: 0;
+            font-weight: 400;
+        }
+
+        .act-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .act-actions .spacer {
+            flex: 1 1 auto;
+        }
+
+        /* --- overflow menu ----------------------------------------------- */
+        .menu-wrap {
+            position: relative;
+            margin-left: auto;
+        }
+
+        .menu-btn {
+            appearance: none;
+            border: 0;
+            background: none;
+            color: var(--text-muted, #888);
+            cursor: pointer;
+            width: 26px;
+            height: 26px;
+            border-radius: var(--radius-sm, 6px);
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            line-height: 1;
+        }
+
+        .menu-btn:hover {
+            background: var(--bg-hover, rgba(128, 128, 128, .12));
+            color: var(--text-primary, #111);
+        }
+
+        .menu {
+            position: absolute;
+            top: 28px;
+            right: 0;
+            z-index: 40;
+            min-width: 184px;
+            padding: 5px;
+            border-radius: var(--radius-md, 10px);
+            background: var(--bg-card, #fff);
+            border: 1px solid var(--border-faint, rgba(128, 128, 128, .2));
+            box-shadow: var(--shadow-lg, 0 10px 30px rgba(0, 0, 0, .18));
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .menu button {
+            appearance: none;
+            border: 0;
+            background: none;
+            text-align: left;
+            font: inherit;
+            font-size: 13px;
+            padding: 7px 10px;
+            border-radius: var(--radius-sm, 6px);
+            color: var(--text-primary, #111);
+            cursor: pointer;
+        }
+
+        .menu button:hover {
+            background: var(--bg-hover, rgba(128, 128, 128, .12));
+        }
+
+        .menu button.danger {
+            color: var(--danger, #dc2626);
+        }
+
+        /* --- in-the-trip row --------------------------------------------- */
+        .trip-row {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            flex-wrap: wrap;
+            padding: 10px 14px;
+        }
+
+        .trip-row .act-name {
+            font-size: 14px;
+        }
+
+        .link-btn {
+            appearance: none;
+            border: 0;
+            background: none;
+            padding: 2px 4px;
+            border-radius: var(--radius-sm, 6px);
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent, #333);
+            cursor: pointer;
+            align-self: center;
+            white-space: nowrap;
+        }
+
+        .link-btn:hover {
+            background: var(--bg-hover, rgba(128, 128, 128, .12));
+        }
+
+        /* --- empty ------------------------------------------------------- */
+        .empty {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 26px 20px;
+        }
+
+        .empty h2 {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 650;
+        }
+
+        .empty p {
+            margin: 0;
+            max-width: 46ch;
+            font-size: 13.5px;
+            color: var(--text-secondary, #666);
+        }
+
+        /* --- modal ------------------------------------------------------- */
+        .backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, .45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+        }
+
+        .modal {
+            width: 100%;
+            max-width: 460px;
+            max-height: calc(100vh - 36px);
+            overflow-y: auto;
+            padding: 20px;
+            border-radius: var(--radius-lg, 14px);
+            background: var(--bg-card, #fff);
+            border: 1px solid var(--border-faint, rgba(128, 128, 128, .2));
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .modal h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 650;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .field .hint {
+            font-size: 11.5px;
+            color: var(--text-muted, #888);
+        }
+
+        .pair {
+            display: flex;
+            gap: 6px;
+        }
+
+        .pair > :first-child {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .modal-actions .grow {
+            flex: 1 1 auto;
+        }
+
+        @media (max-width: 640px) {
+            .backdrop {
+                align-items: flex-end;
+                padding: 0;
+            }
+
+            .modal {
+                max-width: none;
+                border-radius: var(--radius-lg, 14px) var(--radius-lg, 14px) 0 0;
+                max-height: 88vh;
+            }
+
+            .list.indent {
+                padding-left: 0;
+            }
+
+            /* Voting is the whole job on a phone, and five adjacent targets at
+               19px is a mistap waiting to happen. The verdict row already wraps
+               here, so the stars have the card to themselves — spend it on the
+               tap area. A wrong tap is instantly visible in the label and one
+               tap away from being fixed. */
+            .star {
+                font-size: 24px;
+                padding: 8px;
+            }
+
+            .stars {
+                gap: 2px;
             }
         }
 
@@ -596,1288 +671,1192 @@
                 animation: none !important;
             }
         }
-
-        .progress {
-            height: 6px;
-            border-radius: 999px;
-            background: var(--bg-sunken);
-            overflow: hidden;
-            margin-top: 6px;
-        }
-
-        .progress > span {
-            display: block;
-            height: 100%;
-            background: var(--accent);
-            border-radius: 999px;
-            transition: width .3s;
-        }
-
-        .filter-bar {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 14px;
-            align-items: center;
-        }
-
-        .filter-bar select {
-            flex: 1;
-            min-width: 150px;
-        }
-
-        .filter-bar .chip {
-            flex: none;
-        }
-
-        .delete-confirm {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-top: 8px;
-            padding: 8px 12px;
-            background: var(--bg-sunken);
-            border-radius: var(--radius-sm);
-        }
-
-        .delete-confirm .muted {
-            font-size: 12px;
-        }
-
-        .delete-confirm .btn {
-            font-size: 12px;
-            padding: 4px 12px;
-        }
     </style>
 </head>
 <body>
-<div id="root" aria-live="polite"></div>
+<div class="vox" id="app"></div>
+
 <script>
     "use strict";
     (function () {
-        // ---- bridge ------------------------------------------------------------
-        var ctx = {theme: null, locale: 'en', userId: null};
-        var pending = {};
-        var reqSeq = 0;
-
-        function post(msg) {
-            window.parent.postMessage(msg, '*');
-        }
-
-        function invoke(sub, method, body) {
-            method = method || 'GET';
-            return new Promise(function (resolve, reject) {
-                var id = 'r' + (++reqSeq);
-                pending[id] = {resolve: resolve, reject: reject};
-                post({type: 'trek:invoke', requestId: id, sub: sub, method: method, body: body});
-            });
-        }
-
-        function notify(level, message) {
-            post({type: 'trek:notify', level: level, message: message});
-        }
-
-        window.addEventListener('message', function (e) {
-            var m = e.data;
-            if (!m || !m.type) return;
-            if (m.type === 'trek:context') {
-                applyContext(m);
-                return;
-            }
-            if (m.type === 'trek:response' && pending[m.requestId]) {
-                pending[m.requestId].resolve(m.data);
-                delete pending[m.requestId];
-                return;
-            }
-            if (m.type === 'trek:error' && pending[m.requestId]) {
-                var err = new Error(m.message || 'error');
-                err.code = m.code;
-                pending[m.requestId].reject(err);
-                delete pending[m.requestId];
-                return;
-            }
-        });
-
-        function resolveTheme(m) {
-            if (m && m.theme) return m.theme;
-            if (m && m.appearance && m.appearance.scheme) return m.appearance.scheme;
-            return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-        }
-
-        function applyContext(m) {
-            ctx.locale = (m.locale || 'en');
-            if (m.userId != null) ctx.userId = m.userId;
-            // Get tripId from context (for trip-page)
-            if (m.tripId != null) {
-                state.currentTripId = m.tripId;
-            }
-            var theme = resolveTheme(m);
-            ctx.theme = theme;
-            document.documentElement.dataset.theme = theme;
-            applyTokens(m.tokens);
-            if (!booted) {
-                booted = true;
-                boot();
-            } else {
-                if (current) openTab(current, true);
-            }
-        }
-
-        // ---- Modal to create TREK activity ----
-        function showCreateTrekModal(activityId, panel) {
-            var activity = state.activities.find(function (a) { return a.id === activityId; });
-            if (!activity) {
-                notify('error', 'Activity not found');
-                return;
-            }
-
-            // Get place name
-            var placeName = '';
-            if (activity.place_id) {
-                var place = state.places.find(function (p) { return String(p.id) === String(activity.place_id); });
-                if (place) {
-                    placeName = place.name || '';
-                }
-            }
-
-            var overlay = document.createElement('div');
-            overlay.className = 'modal-overlay';
-            overlay.onclick = function (e) { if (e.target === overlay) overlay.remove(); };
-
-            overlay.innerHTML =
-                '<div class="modal-content" onclick="event.stopPropagation();">' +
-                '<h3 style="margin-bottom:16px;">📅 Create in TREK</h3>' +
-
-                // Activity name (required)
-                '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Activity name *</label>' +
-                '<input class="fld" id="modal-trek-activity-name" placeholder="Activity" value="' + esc(activity.title) + '" />' +
-                '</div>' +
-
-                // Address (editable)
-                '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Address</label>' +
-                '<div class="row" style="gap:6px">' +
-                '<input class="fld" id="modal-trek-address" placeholder="Place address" value="' + esc(placeName) + '" style="flex:1" />' +
-                '<button class="btn sec sm" id="modal-geocode-btn" title="Find coordinates automatically">📍</button>' +
-                '</div>' +
-                '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' +
-                '📍 Geocoding is optional and does not block creation' +
-                '</div>' +
-                '</div>' +
-
-                // Coordinates (editable)
-                '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Coordinates (optional)</label>' +
-                '<div class="row" style="gap:6px">' +
-                '<input class="fld" id="modal-trek-lat" placeholder="Latitude" style="flex:1" />' +
-                '<input class="fld" id="modal-trek-lng" placeholder="Longitude" style="flex:1" />' +
-                '</div>' +
-                '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' +
-                'Leave empty for automatic geocoding (if available)' +
-                '</div>' +
-                '</div>' +
-
-                // Website (editable)
-                '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Website</label>' +
-                '<input class="fld" id="modal-trek-website" placeholder="URL" value="' + esc(activity.url || '') + '" />' +
-                '</div>' +
-
-                // Notes (editable)
-                '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Notes (optional)</label>' +
-                '<textarea class="fld" id="modal-trek-notes" rows="2" placeholder="Notes for TREK activity...">' +
-                'Created from Vox: ' + esc(activity.title) +
-                (placeName ? '\nPlace: ' + esc(placeName) : '') +
-                (activity.url ? '\nURL: ' + esc(activity.url) : '') +
-                '</textarea>' +
-                '</div>' +
-
-                // Geocoding indicator (optional, non-blocking)
-                '<div id="modal-geocode-status" style="display:none;margin-bottom:12px;padding:8px;border-radius:var(--radius-sm);font-size:12px"></div>' +
-
-                // Buttons
-                '<div class="row">' +
-                '<button class="btn sec" onclick="this.closest(\'.modal-overlay\').remove()">Cancel</button>' +
-                '<button class="btn" id="modal-create-trek" style="flex:1;background:var(--success);color:white">✅ Create in TREK</button>' +
-                '</div>' +
-                '</div>';
-
-            document.body.appendChild(overlay);
-
-            // References
-            var activityNameInput = overlay.querySelector('#modal-trek-activity-name');
-            var addressInput = overlay.querySelector('#modal-trek-address');
-            var latInput = overlay.querySelector('#modal-trek-lat');
-            var lngInput = overlay.querySelector('#modal-trek-lng');
-            var websiteInput = overlay.querySelector('#modal-trek-website');
-            var notesInput = overlay.querySelector('#modal-trek-notes');
-            var geocodeBtn = overlay.querySelector('#modal-geocode-btn');
-            var geocodeStatus = overlay.querySelector('#modal-geocode-status');
-            var createBtn = overlay.querySelector('#modal-create-trek');
-
-            // Field validation
-            function validateForm() {
-                var name = activityNameInput.value.trim();
-                createBtn.disabled = !name;
-                createBtn.style.opacity = name ? '1' : '0.5';
-            }
-
-            validateForm();
-            activityNameInput.oninput = validateForm;
-
-            // Geocoding via proxy
-            function geocodeAddress(address) {
-                if (!address || address.trim() === '') {
-                    geocodeStatus.style.display = 'block';
-                    geocodeStatus.style.background = 'rgba(180, 83, 9, .15)';
-                    geocodeStatus.style.color = 'var(--warning)';
-                    geocodeStatus.textContent = '⚠️ Please enter an address to geocode';
-                    return;
-                }
-
-                geocodeBtn.disabled = true;
-                geocodeBtn.textContent = '⏳';
-                geocodeStatus.style.display = 'block';
-                geocodeStatus.style.background = 'rgba(22, 163, 74, .15)';
-                geocodeStatus.style.color = 'var(--success)';
-                geocodeStatus.textContent = '🔍 Searching for coordinates...';
-
-                // Server proxy call
-                invoke('/geocode?address=' + encodeURIComponent(address), 'GET')
-                    .then(function(result) {
-                        if (result.success) {
-                            latInput.value = result.lat.toFixed(6);
-                            lngInput.value = result.lng.toFixed(6);
-
-                            geocodeStatus.style.background = 'rgba(22, 163, 74, .15)';
-                            geocodeStatus.style.color = 'var(--success)';
-                            geocodeStatus.textContent = '✅ Coordinates found: ' +
-                                result.lat.toFixed(6) + ', ' +
-                                result.lng.toFixed(6);
-                        } else {
-                            geocodeStatus.style.background = 'rgba(220, 38, 38, .15)';
-                            geocodeStatus.style.color = 'var(--danger)';
-                            geocodeStatus.textContent = '⚠️ ' + (result.error || 'No coordinates found');
-                        }
-                    })
-                    .catch(function(error) {
-                        // DON'T BLOCK - just show warning
-                        geocodeStatus.style.background = 'rgba(180, 83, 9, .15)';
-                        geocodeStatus.style.color = 'var(--warning)';
-                        geocodeStatus.textContent = '⚠️ Geocoding unavailable (continue without coordinates)';
-                        console.warn('Geocoding error (non-blocking):', error);
-                    })
-                    .finally(function() {
-                        geocodeBtn.disabled = false;
-                        geocodeBtn.textContent = '📍';
-                    });
-            }
-
-            // Geocode on click
-            geocodeBtn.onclick = function() {
-                geocodeAddress(addressInput.value.trim());
-            };
-
-            // Automatic geocoding after delay (non-blocking)
-            var geocodeTimeout = null;
-            addressInput.oninput = function() {
-                clearTimeout(geocodeTimeout);
-                geocodeTimeout = setTimeout(function() {
-                    var address = addressInput.value.trim();
-                    if (address && !latInput.value && !lngInput.value) {
-                        geocodeAddress(address);
-                    }
-                }, 2000); // Longer delay to avoid too many requests
-            };
-
-            // Submission - ALWAYS possible even without coordinates
-            createBtn.onclick = function() {
-                var activityName = activityNameInput.value.trim();
-
-                if (!activityName) {
-                    notify('warning', '⚠️ Activity name is required');
-                    activityNameInput.focus();
-                    return;
-                }
-
-                // Build payload (coordinates optional)
-                var payload = {
-                    voxActivityId: activityId,
-                    activityName: activityName,
-                    notes: notesInput.value.trim(),
-                    address: addressInput.value.trim(),
-                    website: websiteInput.value.trim()
-                };
-
-                // Add coordinates IF present
-                var lat = latInput.value.trim();
-                var lng = lngInput.value.trim();
-                if (lat && lng) {
-                    payload.lat = parseFloat(lat);
-                    payload.lng = parseFloat(lng);
-                }
-
-                // Disable button
-                createBtn.disabled = true;
-                createBtn.textContent = '⏳ Creating...';
-
-                invoke('/create-trek-activity', 'POST', payload)
-                    .then(function (result) {
-                        overlay.remove();
-                        var message = result.message || '✅ Activity created in TREK!';
-                        if (result.placeData && result.placeData.geocoded) {
-                            message += ' 📍 Coordinates found!';
-                        }
-                        notify('success', message);
-                        loadData().then(function () {
-                            renderRanking(panel);
-                        });
-                    })
-                    .catch(function (e) {
-                        // Even in case of geocoding error, continue
-                        notify('error', 'Error: ' + e.message);
-                        createBtn.disabled = false;
-                        createBtn.textContent = '✅ Create in TREK';
-                    });
-            };
-
-            // Focus
-            setTimeout(function () {
-                activityNameInput.focus();
-                activityNameInput.select();
-            }, 100);
-        }
-
-        function applyTokens(tokens) {
-            if (!tokens || typeof tokens !== 'object') return;
-            var root = document.documentElement;
-            Object.keys(tokens).forEach(function (k) {
-                var v = tokens[k];
-                if (v == null) return;
-                var name = k.charAt(0) === '-' ? k : ('--' + k);
-                try {
-                    root.style.setProperty(name, String(v));
-                } catch (_) {
-                }
-            });
-        }
-
-        // ---- icons ------------------------------------------------------------
-        var ICON = {
-            vote: '<circle cx="12" cy="12" r="9"/><polygon points="16.2 7.8 13.4 13.4 7.8 16.2 10.6 10.6 16.2 7.8"/>',
-            list: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="15" x2="15" y2="15"/>',
-            trophy: '<path d="M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978"></path>\n' +
-                '<path d="M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978"></path>\n' +
-                '<path d="M18 9h1.5a1 1 0 0 0 0-5H18"></path>\n' +
-                '<path d="M4 22h16"></path>\n' +
-                '<path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"></path>\n' +
-                '<path d="M6 9H4.5a1 1 0 0 1 0-5H6"></path>',
-            plus: '<path d="M12 5v14M5 12h14"/>',
-            trash: '<polyline points="3 4 5 4 21 4"/><path d="M8 4V2h8v2"/><path d="M19 4l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 4"/><path d="M10 9v6"/><path d="M14 9v6"/>',
-            user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
-            place: '<path d="M12 22s-8-7.3-8-12a8 8 0 1 1 16 0c0 4.7-8 12-8 12z"/><circle cx="12" cy="10" r="3"/>',
-            edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>'
-        };
-
-        function svg(name, cls) {
-            return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
-                'stroke-linecap="round" stroke-linejoin="round"' + (cls ? ' class="' + cls + '"' : '') + '>' + (ICON[name] || '') + '</svg>';
-        }
-
-        // L'apostrophe DOIT être échappée : esc() alimente aussi des attributs
-        // et du texte qui finissent dans du HTML construit par concaténation.
-        function esc(s) {
-            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-                return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
-            });
-        }
-
-        // Seuls http(s) sont affichables comme lien : une URL javascript: ou data:
-        // stockée dans une activité ne doit jamais devenir cliquable.
-        function safeUrl(u) {
-            var raw = String(u == null ? '' : u).trim();
-            if (!raw) return null;
-            return /^https?:\/\//i.test(raw) ? raw : null;
-        }
-
-        // La frame sandboxée ne peut pas ouvrir d'onglet elle-même : c'est l'hôte
-        // qui le fait, sur demande explicite.
-        function openExternal(url) {
-            var safe = safeUrl(url);
-            if (!safe) {
-                notify('warning', 'This link cannot be opened');
-                return;
-            }
-            post({type: 'trek:openExternal', url: safe});
-        }
-
-        // Délégation : les liens sont rendus en data-attribut, jamais en onclick
-        // inline (un onclick concaténé est une injection de code, pas de texte).
-        document.addEventListener('click', function (e) {
-            var target = e.target && e.target.closest ? e.target.closest('[data-open-url]') : null;
-            if (!target) return;
-            e.preventDefault();
-            openExternal(target.getAttribute('data-open-url'));
-        });
-
-        // ---- state ------------------------------------------------------------
-        var booted = false, current = null;
-        var root = document.getElementById('root');
-        var state = {
-            activities: [],
-            votes: {},
-            stats: {},
-            places: [],
-            selectedPlace: 'all',
-            currentTripId: null
-        };
-
-        var TABS = [
-            {id: 'activities', icon: 'list', label: 'Activities'},
-            {id: 'ranking', icon: 'trophy', label: 'Ranking'}
+        var LABELS = {1: 'Really not', 2: 'Rather not', 3: 'Fine either way', 4: 'Keen', 5: 'Must do'};
+        // Widest of every string the pill can ever hold, so the slot that
+        // reserves its width covers all of them.
+        var WIDEST_LABEL = [1, 2, 3, 4, 5].map(function (n) { return LABELS[n]; })
+            .concat(['Not voted', 'Saving…'])
+            .reduce(function (a, b) { return b.length > a.length ? b : a; });
+        var SORTS = [
+            ['pick', 'Group pick'],
+            ['votes', 'Most votes'],
+            ['new', 'Newest'],
+            ['split', 'Most divided']
         ];
+        var UNSORTED = 'Unsorted';
+        // Above this many areas, browsing beats scrolling: areas start folded.
+        var FOLD_AREAS_ABOVE = 4;
+        var FOLD_TRIP_ABOVE = 6;
 
-        // ---- boot -------------------------------------------------------------
-        function boot() {
-            root.innerHTML =
-                '<div class="appbar"><div class="wrapmax"><div class="hdr">' +
-                '<span class="mark">' + svg('trophy') + '</span>' +
-                '<div><h1>TREK x Vox</h1><div class="sub">Vote on activities</div></div>' +
-                '</div><div class="tabs" id="tabs" role="tablist"></div></div></div>' +
-                '<div id="scroller"><div class="wrapmax"><div id="panel"></div></div></div>';
-            renderTabs();
-            openTab('activities');
+        var S = {
+            tripId: null,
+            userId: null,
+            board: null,
+            sort: 'pick',
+            group: false,
+            groupTouched: false,
+            query: '',
+            lens: {mine: false, split: false, ready: false},
+            folded: {},
+            tripFolded: false,
+            wasNarrowing: false,
+            open: {},
+            loading: true,
+            error: null
+        };
+
+        var app = document.getElementById('app');
+
+        // ---- tiny DOM builder ---------------------------------------------
+        // Everything user-supplied goes in through `text`, which is
+        // textContent. No template concatenation, so an activity title or URL
+        // is data and can never become markup.
+        function h(tag, props, kids) {
+            var n = document.createElement(tag);
+            props = props || {};
+            Object.keys(props).forEach(function (k) {
+                var v = props[k];
+                if (v == null || v === false) return;
+                if (k === 'text') n.textContent = v;
+                else if (k === 'class') n.className = v;
+                else if (k === 'on') Object.keys(v).forEach(function (ev) { n.addEventListener(ev, v[ev]); });
+                else if (k === 'style') n.setAttribute('style', v);
+                else if (k in n && k !== 'list') n[k] = v;
+                else n.setAttribute(k, v);
+            });
+            (Array.isArray(kids) ? kids : kids ? [kids] : []).forEach(function (c) {
+                if (c == null || c === false) return;
+                n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+            });
+            return n;
         }
 
-        function renderTabs() {
-            var tabs = document.getElementById('tabs');
-            tabs.innerHTML = '';
-            TABS.forEach(function (t) {
-                var b = document.createElement('button');
-                b.className = 'tab';
-                b.type = 'button';
-                b.dataset.tab = t.id;
-                b.setAttribute('role', 'tab');
-                b.setAttribute('aria-selected', current === t.id ? 'true' : 'false');
-                b.innerHTML = svg(t.icon) + '<span>' + esc(t.label) + '</span>';
-                b.onclick = function () {
-                    openTab(t.id);
+        function clear(n) {
+            while (n.firstChild) n.removeChild(n.firstChild);
+        }
+
+        // ---- formatting ---------------------------------------------------
+        function scoreText(a) {
+            return a.avg_score == null ? '—' : a.avg_score.toFixed(1);
+        }
+
+        function turnoutText(a) {
+            var total = S.board ? S.board.member_count : 0;
+            if (!a.vote_count) return 'no votes yet';
+            if (!total) return a.vote_count === 1 ? '1 vote' : a.vote_count + ' votes';
+            return a.vote_count + ' of ' + total + ' voted';
+        }
+
+        function waitingText(a) {
+            var m = a.missing || [];
+            if (!m.length) return null;
+            if (m.length === 1) return 'waiting on ' + m[0].name;
+            if (m.length === 2) return 'waiting on ' + m[0].name + ' and ' + m[1].name;
+            return 'waiting on ' + m.length + ' people';
+        }
+
+        function isHttp(url) {
+            return /^https?:\/\//i.test(String(url || '').trim());
+        }
+
+        // The sandbox cannot open a tab itself — only the host can. If this kit
+        // has no openExternal, say so instead of doing nothing.
+        function openLink(url) {
+            if (window.trek && typeof trek.openExternal === 'function') {
+                trek.openExternal(url);
+                return;
+            }
+            if (window.trek && typeof trek.notify === 'function') {
+                trek.notify('warning', 'This TREK version cannot open links from a plugin');
+            }
+        }
+
+        function areaOf(a) {
+            return a.area_name || UNSORTED;
+        }
+
+        // ---- api ----------------------------------------------------------
+        function api(sub, method, payload) {
+            return trek.invoke(sub, {method: method || 'GET', body: payload});
+        }
+
+        /**
+         * The wire format is deliberately lean: a ballot is `{u, s}` pairs and
+         * nothing else. Names and area labels live ONCE on the board, and are
+         * stitched back onto each activity here — so the payload does not
+         * repeat a display name per member per proposal. Everything below this
+         * point reads the stitched fields and never the raw ballot.
+         */
+        function hydrate(board) {
+            var nameOf = {};
+            var areaName = {};
+            (board.members || []).forEach(function (m) { nameOf[String(m.id)] = m.name; });
+            (board.areas || []).forEach(function (ar) { areaName[String(ar.id)] = ar.name; });
+            board._nameOf = nameOf;
+            board._areaName = areaName;
+            (board.deciding || []).concat(board.in_trip || []).forEach(function (a) { hydrateOne(a, board); });
+        }
+
+        function hydrateOne(a, board) {
+            if (!board) return;
+            a.area_name = a.area_id != null ? (board._areaName[String(a.area_id)] || null) : null;
+
+            var voted = {};
+            a.voters = (a.ballot || []).map(function (b) {
+                voted[String(b.u)] = true;
+                return {
+                    user_id: String(b.u),
+                    // Someone who has since left the trip is no longer on the
+                    // roster, so their vote is labelled rather than dropped.
+                    name: board._nameOf[String(b.u)] || 'Former member',
+                    score: b.s
                 };
-                tabs.appendChild(b);
+            }).sort(function (x, y) { return y.score - x.score; });
+
+            a.missing = (board.members || [])
+                .filter(function (m) { return !voted[String(m.id)]; })
+                .map(function (m) { return {user_id: String(m.id), name: m.name}; });
+        }
+
+        function loadBoard() {
+            if (S.tripId == null) return Promise.resolve();
+            S.loading = !S.board;
+            S.error = null;
+            render();
+            return api('/board?tripId=' + encodeURIComponent(S.tripId) + '&sort=' + S.sort)
+                .then(function (board) {
+                    hydrate(board);
+                    S.board = board;
+                    var areas = (board.areas || []).length;
+                    // Grouping earns its place only when there is more than one
+                    // area. The user's own choice always wins.
+                    if (!S.groupTouched) S.group = areas > 1;
+                    initFolds();
+                    S.tripFolded = (board.in_trip || []).length > FOLD_TRIP_ABOVE;
+                    S.loading = false;
+                    render();
+                })
+                .catch(function (e) {
+                    S.loading = false;
+                    S.error = e && e.message ? e.message : 'Could not load Vox';
+                    render();
+                });
+        }
+
+        // Past a handful of areas, fold everything: nine summary lines are a
+        // table of contents you can read in three seconds, where nine open
+        // sections are just a longer scroll. One area opens — the first that is
+        // waiting on you — so you still land on something actionable, and the
+        // "Needs my vote" lens is the way to sweep the rest.
+        function initFolds() {
+            var groups = {};
+            var order = [];
+            (S.board.deciding || []).forEach(function (a) {
+                var k = areaOf(a);
+                if (!groups[k]) {
+                    groups[k] = {pending: 0};
+                    order.push(k);
+                }
+                if (a.my_score == null) groups[k].pending++;
+            });
+
+            S.folded = {};
+            if (order.length <= FOLD_AREAS_ABOVE) return;
+
+            order.sort(function (x, y) {
+                if (x === UNSORTED) return 1;
+                if (y === UNSORTED) return -1;
+                return x.localeCompare(y);
+            });
+            var opened = false;
+            order.forEach(function (k) {
+                var openThis = !opened && groups[k].pending > 0;
+                if (openThis) opened = true;
+                S.folded[k] = !openThis;
             });
         }
 
-        function openTab(id, force) {
-            current = id;
-            var btns = document.getElementById('tabs').querySelectorAll('.tab');
-            btns.forEach(function (b) {
-                b.setAttribute('aria-selected', b.dataset.tab === id ? 'true' : 'false');
+        // ---- vote ---------------------------------------------------------
+        function vote(activity, score) {
+            var previous = activity.my_score;
+            if (previous === score) return;
+
+            // Paint first, reconcile after: a tap must feel instant even on a
+            // phone halfway up a mountain.
+            activity.my_score = score;
+            activity._saving = true;
+            render();
+
+            api('/vote', 'POST', {activityId: activity.id, score: score})
+                .then(function (r) {
+                    activity.my_score = r.my_score;
+                    activity.vote_count = r.vote_count;
+                    activity.avg_score = r.avg_score;
+                    activity.rank_score = r.rank_score;
+                    activity.split = r.split;
+                    activity.ballot = r.ballot;
+                    activity._saving = false;
+                    if (S.board) S.board.member_count = r.member_count;
+                    // Same lean shape as a board row, so the same stitcher.
+                    hydrateOne(activity, S.board);
+                    recountPending();
+                    render();
+                })
+                .catch(function (e) {
+                    activity.my_score = previous;
+                    activity._saving = false;
+                    render();
+                    trek.notify('error', 'Vote not saved: ' + (e && e.message ? e.message : 'unknown error'));
+                });
+        }
+
+        function recountPending() {
+            if (!S.board) return;
+            S.board.pending_for_me = S.board.deciding.filter(function (a) { return a.my_score == null; }).length;
+        }
+
+        // ---- lenses -------------------------------------------------------
+        function isReady(a) {
+            return a.vote_count > 0 && (!a.missing || a.missing.length === 0);
+        }
+
+        function matches(a, q) {
+            if (!q) return true;
+            return (a.title + ' ' + (a.description || '') + ' ' + (a.area_name || '')).toLowerCase().indexOf(q) >= 0;
+        }
+
+        function visible(items) {
+            var q = S.query.trim().toLowerCase();
+            return items.filter(function (a) {
+                if (!matches(a, q)) return false;
+                if (S.lens.mine && a.my_score != null) return false;
+                if (S.lens.split && !a.split) return false;
+                if (S.lens.ready && !isReady(a)) return false;
+                return true;
             });
-            var panel = document.getElementById('panel');
-            if (!force) {
-                var sc = document.getElementById('scroller');
-                if (sc) sc.scrollTop = 0;
-            }
-            panel.innerHTML = '<div class="loading"><span class="spinner"></span>Loading…</div>';
-            reportHeight();
-            var fn = SECTIONS[id];
-            Promise.resolve(fn(panel, force)).then(reportHeight).catch(function (e) {
-                panel.innerHTML = '<div class="card"><div class="muted">Could not load: ' + esc(e && e.message) + '</div></div>';
-                reportHeight();
-            });
         }
 
-        // ---- height reporting --------------------------------------------------
-        var AVAIL_H = 0;
-
-        function availH() {
-            if (!AVAIL_H) AVAIL_H = Math.max(window.innerHeight || 700, 420);
-            return AVAIL_H;
+        function narrowing() {
+            return !!(S.query.trim() || S.lens.mine || S.lens.split || S.lens.ready);
         }
 
-        function reportHeight() {
-            var appbar = document.querySelector('.appbar');
-            var panel = document.getElementById('panel');
-            var appH = appbar ? appbar.offsetHeight : 0;
-            var panelH = panel ? panel.getBoundingClientRect().height : 0;
-            var content = Math.ceil(appH + panelH) + 36;
-            post({type: 'trek:resize', height: Math.max(320, Math.min(content, availH()))});
-        }
-
-        window.addEventListener('resize', function () {
-            if (window.innerHeight > AVAIL_H) {
-                AVAIL_H = window.innerHeight;
-                reportHeight();
-            }
-        });
-        var _panelObserver = null;
-        if (window.ResizeObserver) {
-            try {
-                _panelObserver = new ResizeObserver(reportHeight);
-            } catch (_) {
+        /**
+         * Folding is for browsing a long board; a search or a lens has already
+         * done that reduction, so everything opens up — otherwise you narrow to
+         * 26 proposals and stare at nine closed rows. Restores the index when
+         * the narrowing is cleared. Only fires on the transition, so folding an
+         * area by hand mid-search survives the next keystroke.
+         */
+        function syncFolds() {
+            var now = narrowing();
+            if (now === S.wasNarrowing) return;
+            S.wasNarrowing = now;
+            if (now) {
+                S.folded = {};
+                S.tripFolded = false;
+            } else {
+                initFolds();
+                S.tripFolded = ((S.board && S.board.in_trip) || []).length > FOLD_TRIP_ABOVE;
             }
         }
 
-        function armPanelObserver() {
-            var pn = document.getElementById('panel');
-            if (_panelObserver && pn) {
-                try {
-                    _panelObserver.disconnect();
-                    _panelObserver.observe(pn);
-                } catch (_) {
+        // ---- render -------------------------------------------------------
+        function render() {
+            clear(app);
+
+            if (S.tripId == null) {
+                app.appendChild(noTrip());
+                return;
+            }
+
+            app.appendChild(header());
+
+            if (S.loading) {
+                app.appendChild(h('div', {class: 'trek-card trek-skeleton', style: 'height:84px'}));
+                app.appendChild(h('div', {class: 'trek-card trek-skeleton', style: 'height:84px'}));
+                return;
+            }
+            if (S.error) {
+                app.appendChild(h('div', {class: 'trek-card'}, [
+                    h('div', {class: 'trek-title', text: 'Vox could not load'}),
+                    h('p', {class: 'trek-muted', text: S.error}),
+                    h('button', {class: 'trek-btn trek-btn--secondary', type: 'button', text: 'Try again', on: {click: loadBoard}})
+                ]));
+                return;
+            }
+            if (!S.board) return;
+
+            var deciding = S.board.deciding || [];
+            var inTrip = S.board.in_trip || [];
+
+            if (!deciding.length && !inTrip.length) {
+                app.appendChild(firstRun());
+                return;
+            }
+
+            syncFolds();
+
+            if (deciding.length + inTrip.length > 6) app.appendChild(searchbar(deciding));
+            app.appendChild(controls(deciding));
+
+            var shownDeciding = visible(deciding);
+            var shownTrip = visible(inTrip);
+
+            if (!shownDeciding.length && !shownTrip.length) {
+                app.appendChild(noMatches());
+                return;
+            }
+
+            if (shownDeciding.length) {
+                app.appendChild(h('div', {class: 'band', text: 'Deciding · ' + shownDeciding.length}));
+                // Grouping is independent of the search and the lenses: they
+                // combine. One rule, no exceptions — narrowing to your own
+                // homework and still working through it area by area is the
+                // common case, not an edge case.
+                if (S.group) {
+                    var totals = areaTotals(deciding);
+                    groupByArea(shownDeciding).forEach(function (g) { app.appendChild(areaSection(g, totals)); });
+                } else {
+                    app.appendChild(listOf(shownDeciding, card, false));
+                }
+            }
+
+            if (shownTrip.length) {
+                var band = h('div', {class: 'band'}, [
+                    h('span', {text: 'In the trip · ' + shownTrip.length})
+                ]);
+                if (inTrip.length > FOLD_TRIP_ABOVE) {
+                    band = h('button', {
+                        class: 'area-head',
+                        type: 'button',
+                        'aria-expanded': S.tripFolded ? 'false' : 'true',
+                        on: {click: function () { S.tripFolded = !S.tripFolded; render(); }}
+                    }, [
+                        h('span', {class: 'caret', text: S.tripFolded ? '▸' : '▾'}),
+                        h('span', {class: 'nm', text: 'In the trip'}),
+                        h('span', {class: 'sum', text: shownTrip.length + ' added to the itinerary'})
+                    ]);
+                    app.appendChild(band);
+                    if (!S.tripFolded) app.appendChild(listOf(shownTrip, tripRow, true));
+                } else {
+                    app.appendChild(band);
+                    app.appendChild(listOf(shownTrip, tripRow, false));
                 }
             }
         }
 
-        // ---- data loading ------------------------------------------------------
-        // Toutes les routes sont scopées au voyage et refusent une requête sans
-        // tripId — inutile (et trompeur) de les appeler avant d'avoir le contexte.
-        function hasTrip() {
-            return state.currentTripId != null && state.currentTripId !== '';
+        function listOf(items, fn, indent) {
+            return h('div', {class: 'list' + (indent ? ' indent' : '')}, items.map(fn));
         }
 
-        function loadData() {
-            if (!hasTrip()) return Promise.resolve();
-
-            var q = '?tripId=' + encodeURIComponent(state.currentTripId);
-
-            return invoke('/clean-orphaned-places', 'POST', {tripId: state.currentTripId})
-                .catch(function () { /* le nettoyage est opportuniste, jamais bloquant */ })
-                .then(function () {
-                    return Promise.all([
-                        invoke('/activities' + q, 'GET').catch(function () { return []; }),
-                        invoke('/stats' + q, 'GET').catch(function () { return []; }),
-                        invoke('/places' + q, 'GET').catch(function () { return []; })
-                    ]);
-                })
-                .then(function (results) {
-                    state.activities = results[0] || [];
-                    state.stats = results[1] || [];
-                    state.places = results[2] || [];
-                    state.votes = {};
-                    var promises = state.activities.map(function (a) {
-                        return invoke('/votes?activityId=' + a.id, 'GET')
-                            .then(function (votes) { state.votes[a.id] = votes || []; })
-                            .catch(function () { state.votes[a.id] = []; });
-                    });
-                    return Promise.all(promises);
-                });
-        }
-
-        function renderNoTrip(panel) {
-            panel.innerHTML = '<div class="empty-state">' +
-                '<div class="icon">🧭</div>' +
-                '<div style="font-size:16px;font-weight:600;margin-bottom:4px">No trip context</div>' +
-                '<div class="muted">Open Vox from inside a trip to vote on its activities.</div>' +
-                '</div>';
-        }
-
-        // ---- sections ---------------------------------------------------------
-        var SECTIONS = {};
-
-        SECTIONS.activities = function (panel) {
-            if (!hasTrip()) return Promise.resolve(renderNoTrip(panel));
-            return loadData().then(function () {
-                renderActivities(panel);
+        function groupByArea(items) {
+            var order = [];
+            var by = {};
+            items.forEach(function (a) {
+                var name = areaOf(a);
+                if (!by[name]) {
+                    by[name] = {name: name, items: []};
+                    order.push(by[name]);
+                }
+                by[name].items.push(a);
             });
-        };
-
-        function getPlaceName(placeId) {
-            if (!placeId || placeId === 'all' || placeId === 'none') return 'No place';
-            var place = state.places.find(function (p) {
-                return String(p.id) === String(placeId);
+            // Alphabetical, "Unsorted" last. At scale, predictable beats
+            // clever: the summary line already says where the work is.
+            return order.sort(function (x, y) {
+                if (x.name === UNSORTED) return 1;
+                if (y.name === UNSORTED) return -1;
+                return x.name.localeCompare(y.name);
             });
-            return place ? place.name || place.title || 'Place ' + placeId : 'Unknown place';
         }
 
-        // total_members vaut 0 quand l'hôte n'a pas pu livrer le roster du voyage.
-        // Dans ce cas on affiche l'inconnu plutôt qu'un pourcentage inventé.
-        function participationLabel(stats, voteCount) {
-            var total = stats ? stats.total_members || 0 : 0;
-            if (!total) return '👥 — participation (' + voteCount + ' voted)';
-            var pct = stats ? stats.participation || 0 : 0;
-            return '👥 ' + pct + '% participation (' + voteCount + '/' + total + ')';
+        function areaTotals(all) {
+            var t = {};
+            all.forEach(function (a) {
+                var k = areaOf(a);
+                t[k] = (t[k] || 0) + 1;
+            });
+            return t;
         }
 
-        function renderActivities(panel) {
-            var html = '';
+        function areaSection(g, totals) {
+            var folded = !!S.folded[g.name];
+            var shown = g.items.length;
+            var total = (totals && totals[g.name]) || shown;
+            var pending = g.items.filter(function (a) { return a.my_score == null; }).length;
+            var top = g.items.reduce(function (m, a) {
+                return (!m || (a.rank_score || 0) > (m.rank_score || 0)) ? a : m;
+            }, null);
 
-            // Place filter bar (no trip filter since we're already on a specific trip)
-            html += '<div class="filter-bar">';
-            html += '<select class="fld" id="place-filter">';
-            var selectedAll = state.selectedPlace === 'all' ? 'selected' : '';
-            var selectedNone = state.selectedPlace === 'none' ? 'selected' : '';
-            html += '<option value="all" ' + selectedAll + '>📍 All places</option>';
-            html += '<option value="none" ' + selectedNone + '>📌 No place</option>';
-            state.places.forEach(function (p) {
-                var selected = state.selectedPlace === String(p.id) ? 'selected' : '';
-                html += '<option value="' + esc(p.id) + '" ' + selected + '>' + esc(p.name || p.title || 'Place') + '</option>';
-            });
-            html += '</select>';
-            html += '</div>';
+            // Say "4 of 12" while narrowed: "4 proposals" over a group of
+            // twelve would simply be untrue.
+            var sum = [shown === total
+                ? total + (total === 1 ? ' proposal' : ' proposals')
+                : shown + ' of ' + total];
+            if (top && top.avg_score != null) sum.push('top ' + top.title + ' ' + top.avg_score.toFixed(1));
 
-            // Filter activities
-            var filtered = state.activities;
-            if (state.selectedPlace === 'none') {
-                filtered = filtered.filter(function (a) {
-                    return !a.place_id;
-                });
-            } else if (state.selectedPlace !== 'all') {
-                filtered = filtered.filter(function (a) {
-                    return String(a.place_id) === state.selectedPlace;
-                });
+            var head = h('button', {
+                class: 'area-head',
+                type: 'button',
+                'aria-expanded': folded ? 'false' : 'true',
+                on: {
+                    click: function () {
+                        S.folded[g.name] = !folded;
+                        render();
+                    }
+                }
+            }, [
+                h('span', {class: 'caret', text: folded ? '▸' : '▾'}),
+                h('span', {class: 'nm', text: g.name}),
+                h('span', {class: 'sum', text: sum.join(' · ')}),
+                // Redundant once the "Needs my vote" lens is on — everything
+                // shown needs it.
+                (pending && !S.lens.mine) ? h('span', {class: 'todo', text: '· ' + pending + ' need your vote'}) : null
+            ]);
+
+            var frag = document.createDocumentFragment();
+            frag.appendChild(head);
+            if (!folded) frag.appendChild(listOf(g.items, card, true));
+            return frag;
+        }
+
+        // ---- header, search, controls ---------------------------------------
+        function header() {
+            var left = h('div', {class: 'grow'}, [h('h1', {text: 'Vox'})]);
+
+            if (S.board) {
+                var total = (S.board.deciding || []).length;
+                var pending = S.board.pending_for_me || 0;
+                var msg = !total
+                    ? null
+                    : pending
+                        ? pending + ' of ' + total + ' still need your vote'
+                        : 'You have voted on all ' + total + '.';
+                if (msg) left.appendChild(h('div', {class: 'status', text: msg}));
             }
 
-            if (filtered.length === 0) {
-                html += '<div class="empty-state">' +
-                    '<div class="icon">🗳️</div>' +
-                    '<div style="font-size:16px;font-weight:600;margin-bottom:4px">No activities for this place</div>' +
-                    '<div class="muted">Click the + button to propose an activity</div>' +
-                    '</div>';
-            } else {
-                filtered.forEach(function (activity) {
-                    var votes = state.votes[activity.id] || [];
-                    var stats = state.stats.find(function (s) {
-                        return s.id === activity.id;
-                    });
-                    // Les ids arrivent en string dans le contexte, la colonne
-                    // user_id est TEXT : on compare des String des deux côtés.
-                    var userVote = votes.find(function (v) {
-                        return String(v.user_id) === String(ctx.userId);
-                    });
-                    var avgScore = stats ? parseFloat(stats.avg_score || 0) : 0;
-                    var consensus = stats ? stats.consensus || 0 : 0;
-                    var placeName = activity.place_id ? getPlaceName(activity.place_id) : '';
-                    // can_delete est calculé par le serveur (auteur, propriétaire du
-                    // voyage, ou proposition orpheline) : ne pas rejouer la règle ici,
-                    // et ne pas proposer un bouton qui répondrait 403.
-                    var canDelete = !!activity.can_delete;
+            return h('div', {class: 'vox-head'}, [
+                left,
+                h('button', {
+                    class: 'trek-btn trek-btn--primary',
+                    type: 'button',
+                    text: '+ Propose',
+                    on: {click: function () { openActivityModal(null); }}
+                })
+            ]);
+        }
 
-                    html += '<div class="card" data-activity="' + activity.id + '">' +
-                        '<div class="between">' +
-                        '<div class="row">' +
-                        '<strong>' + esc(activity.title) + '</strong>' +
-                        (placeName ? ' <span class="chip" style="font-size:10px">📍 ' + esc(placeName) + '</span>' : '') +
-                        '<span class="action-buttons">' +
-                        '<button class="btn-edit" data-edit="' + activity.id + '" title="Edit activity">' + svg('edit') + '</button>' +
-                        (canDelete
-                            ? '<button class="btn-delete" data-delete="' + activity.id + '" title="Delete this proposal">' + svg('trash') + '</button>'
-                            : '') +
-                        '</span>' +
-                        '</div>' +
-                        '<div class="row">' +
-                        '<span class="chip">💯 ' + consensus + '%</span>' +
-                        '</div>' +
-                        '</div>';
+        function searchbar(deciding) {
+            var input = h('input', {
+                class: 'trek-input',
+                type: 'search',
+                value: S.query,
+                placeholder: 'Search proposals, notes, areas…',
+                'aria-label': 'Search proposals'
+            });
 
-                    if (activity.description) {
-                        html += '<div class="muted" style="font-size:13px;margin-top:4px">' + esc(activity.description) + '</div>';
-                    }
-                    var activityUrl = safeUrl(activity.url);
-                    if (activityUrl) {
-                        html += '<div style="margin-top:4px"><a href="#" data-open-url="' + esc(activityUrl) + '" style="color:var(--accent);font-size:12px">🔗 Link</a></div>';
-                    }
+            // Re-rendering on every keystroke would steal the caret, so the
+            // input is left alone and only the list below it is redrawn.
+            input.addEventListener('input', function () {
+                S.query = input.value;
+                redrawBelowSearch();
+            });
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && S.query) {
+                    S.query = '';
+                    input.value = '';
+                    redrawBelowSearch();
+                }
+            });
 
-                    html += '<div class="row" style="margin-top:8px">' +
-                        '<div class="stars" data-activity="' + activity.id + '">' +
-                        [1, 2, 3, 4, 5].map(function (s) {
-                            var on = userVote && userVote.score >= s;
-                            return '<span class="star' + (on ? ' on' : '') + '" data-score="' + s + '">★</span>';
-                        }).join('') +
-                        '</div>' +
-                        '<span style="font-size:13px;color:var(--text-muted)">' + avgScore.toFixed(1) + '</span>' +
-                        '</div>' +
-                        '<div class="row" style="margin-top:4px;gap:12px;font-size:11px;color:var(--text-muted)">' +
-                        '<span>' + esc(participationLabel(stats, votes.length)) + '</span>' +
-                        '<span>📊 ' + votes.length + ' votes</span>' +
-                        '</div>' +
-                        '<div class="progress"><span style="width:' + consensus + '%"></span></div>';
+            var kids = [h('span', {class: 'glyph', text: '⌕'}), input];
 
-                    if (votes.length > 0) {
-                        html += '<div style="margin-top:10px;border-top:1px solid var(--border-faint);padding-top:8px">';
-                        votes.slice(0, 5).forEach(function (v) {
-                            html += '<div class="vote-item">' +
-                                '<span class="voter">' + esc(v.display_name || v.username || '?') + '</span>' +
-                                '<span class="voter-stars">' + '★'.repeat(v.score) + '☆'.repeat(5 - v.score) + '</span>' +
-                                '</div>';
-                        });
-                        if (votes.length > 5) {
-                            html += '<div class="faint" style="font-size:11px">+' + (votes.length - 5) + ' more</div>';
+            if (S.query.trim()) {
+                var n = visible(deciding).length + visible(S.board.in_trip || []).length;
+                kids.push(h('span', {class: 'count', text: n + (n === 1 ? ' match' : ' matches')}));
+                kids.push(h('button', {
+                    class: 'clear', type: 'button', text: '×', 'aria-label': 'Clear search',
+                    on: {
+                        click: function () {
+                            S.query = '';
+                            render();
+                            focusSearch();
                         }
-                        html += '</div>';
                     }
+                }));
+            }
 
-                    html += '</div>';
+            return h('div', {class: 'searchbar'}, kids);
+        }
+
+        function redrawBelowSearch() {
+            var bar = app.querySelector('.searchbar');
+            var caret = bar ? bar.querySelector('input').selectionStart : null;
+            render();
+            var again = app.querySelector('.searchbar input');
+            if (again) {
+                again.focus();
+                if (caret != null) { try { again.setSelectionRange(caret, caret); } catch (_) {} }
+            }
+        }
+
+        function focusSearch() {
+            var i = app.querySelector('.searchbar input');
+            if (i) i.focus();
+        }
+
+        function controls(deciding) {
+            var sel = h('select', {class: 'trek-select', 'aria-label': 'Sort proposals'},
+                SORTS.map(function (s) {
+                    return h('option', {value: s[0], text: s[1], selected: S.sort === s[0]});
+                }));
+            sel.addEventListener('change', function () {
+                S.sort = sel.value;
+                loadBoard();
+            });
+
+            var kids = [sel];
+
+            function lens(key, label, count) {
+                if (!count && !S.lens[key]) return null;
+                return h('button', {
+                    class: 'lens',
+                    type: 'button',
+                    'aria-pressed': S.lens[key] ? 'true' : 'false',
+                    on: {
+                        click: function () {
+                            S.lens[key] = !S.lens[key];
+                            render();
+                        }
+                    }
+                }, [
+                    document.createTextNode(label),
+                    count ? h('span', {class: 'n', text: count}) : null
+                ]);
+            }
+
+            kids.push(lens('mine', 'Needs my vote', deciding.filter(function (a) { return a.my_score == null; }).length));
+            kids.push(lens('split', 'Divided', deciding.filter(function (a) { return a.split; }).length));
+            kids.push(lens('ready', 'Everyone voted', deciding.filter(isReady).length));
+
+            if ((S.board.areas || []).length > 1) {
+                kids.push(h('button', {
+                    class: 'lens',
+                    type: 'button',
+                    'aria-pressed': S.group ? 'true' : 'false',
+                    text: 'By area',
+                    on: {
+                        click: function () {
+                            S.group = !S.group;
+                            S.groupTouched = true;
+                            render();
+                        }
+                    }
+                }));
+            }
+
+            return h('div', {class: 'controls'}, kids);
+        }
+
+        // ---- the card ------------------------------------------------------
+        function card(a) {
+            // Inside an area section the chip would just repeat the heading.
+            var showArea = !!a.area_name && !S.group;
+
+            var kids = [
+                h('div', {class: 'act-top'}, [
+                    h('span', {class: 'act-name', text: a.title}),
+                    showArea ? h('span', {class: 'trek-chip', text: a.area_name}) : null,
+                    a.split ? h('span', {class: 'trek-chip trek-chip--warning', text: 'Divided', title: 'Some are keen, some would rather not'}) : null,
+                    // On the title row rather than a row of its own: a long board
+                    // cannot afford a line per card for a secondary link.
+                    isHttp(a.url) ? h('button', {
+                        class: 'link-btn',
+                        type: 'button',
+                        text: '🔗 Link',
+                        title: a.url,
+                        'aria-label': 'Open the link for ' + a.title,
+                        on: {click: function () { openLink(a.url); }}
+                    }) : null,
+                    overflow(a)
+                ])
+            ];
+
+            if (a.description) {
+                kids.push(h('div', {class: 'act-note', text: a.description, title: a.description}));
+            }
+
+            var waiting = waitingText(a);
+            var canOpen = (a.voters && a.voters.length) || (a.missing && a.missing.length);
+
+            kids.push(h('div', {class: 'verdict'}, [
+                h('span', {class: 'score' + (a.avg_score == null ? ' none' : ''), text: scoreText(a)}),
+                a.avg_score == null ? null : h('span', {class: 'gauge'}, [h('i', {style: 'width:' + (a.avg_score / 5 * 100) + '%'})]),
+                h('button', {
+                    class: 'turnout' + (canOpen ? '' : ' plain'),
+                    type: 'button',
+                    text: turnoutText(a),
+                    disabled: !canOpen,
+                    'aria-expanded': S.open[a.id] ? 'true' : 'false',
+                    title: canOpen ? 'See who voted' : null,
+                    on: {
+                        click: function () {
+                            S.open[a.id] = !S.open[a.id];
+                            render();
+                        }
+                    }
+                }),
+                waiting ? h('span', {class: 'waiting', text: waiting}) : null,
+                h('span', {class: 'spacer'}),
+                ballot(a)
+            ]));
+
+            if (S.open[a.id]) kids.push(breakdown(a));
+
+            // The button appears only once the group has actually spoken. On a
+            // long board that is the difference between a handful of live calls
+            // to action and one dead button per row; before then, adding to the
+            // trip is still one click away in the ··· menu.
+            if (isReady(a)) {
+                kids.push(h('div', {class: 'act-actions'}, [
+                    h('span', {class: 'spacer'}),
+                    h('button', {
+                        class: 'trek-btn trek-btn--primary',
+                        type: 'button',
+                        text: 'Add to trip',
+                        on: {click: function () { openAddToTripModal(a); }}
+                    })
+                ]));
+            }
+
+            return h('div', {class: 'trek-card act'}, kids);
+        }
+
+        function ballot(a) {
+            var label = h('span', {
+                class: 'vlabel live' + (a.my_score ? '' : ' none'),
+                text: a._saving ? 'Saving…' : (a.my_score ? LABELS[a.my_score] : 'Not voted')
+            });
+            // Sizes the slot and never shows: whichever label is widest.
+            var ghost = h('span', {class: 'vlabel ghost', text: WIDEST_LABEL});
+
+            function show(n) {
+                label.textContent = LABELS[n];
+                label.className = 'vlabel live';
+                paint(n);
+            }
+
+            function rest() {
+                label.textContent = a._saving ? 'Saving…' : (a.my_score ? LABELS[a.my_score] : 'Not voted');
+                label.className = 'vlabel live' + (a.my_score ? '' : ' none');
+                paint(a.my_score || 0);
+            }
+
+            var buttons = [1, 2, 3, 4, 5].map(function (n) {
+                return h('button', {
+                    class: 'star',
+                    type: 'button',
+                    text: '★',
+                    disabled: !!a._saving,
+                    'aria-label': LABELS[n],
+                    'aria-pressed': a.my_score === n ? 'true' : 'false',
+                    on: {
+                        mouseenter: function () { show(n); },
+                        focus: function () { show(n); },
+                        mouseleave: rest,
+                        blur: rest,
+                        click: function () { vote(a, n); }
+                    }
                 });
+            });
+
+            function paint(upTo) {
+                buttons.forEach(function (b, i) { b.classList.toggle('on', i < upTo); });
             }
 
-            panel.innerHTML = html;
+            paint(a.my_score || 0);
 
-            // Place filter handler
-            var filterSelect = panel.querySelector('#place-filter');
-            if (filterSelect) {
-                filterSelect.onchange = function () {
-                    state.selectedPlace = this.value;
-                    renderActivities(panel);
-                };
+            return h('div', {class: 'ballot'}, [
+                h('span', {class: 'stars', role: 'group', 'aria-label': 'Your preference'}, buttons),
+                h('span', {class: 'vlabel-slot'}, [ghost, label])
+            ]);
+        }
+
+        function breakdown(a) {
+            var rows = (a.voters || []).map(function (v) {
+                return h('div', {class: 'vrow'}, [
+                    h('span', {class: 'nm', text: v.name}),
+                    h('span', {class: 'sc', text: LABELS[v.score] || String(v.score)})
+                ]);
+            });
+            (a.missing || []).forEach(function (m) {
+                rows.push(h('div', {class: 'vrow absent'}, [
+                    h('span', {class: 'nm', text: m.name}),
+                    h('span', {class: 'sc', text: 'not voted'})
+                ]));
+            });
+            return h('div', {class: 'breakdown'}, rows);
+        }
+
+        // No "open in itinerary" link: TREK's planner takes no URL parameter that
+        // targets a place (only ?create=place|reservation|transport), and Vox is
+        // itself a tab of /trips/<id> — so navigating there lands you exactly
+        // where you already are. A button that cannot keep its promise is worse
+        // than no button; the ✓ Added chip already says where the place went.
+        function tripRow(a) {
+            return h('div', {class: 'trek-card trip-row'}, [
+                h('span', {class: 'trek-chip trek-chip--success', text: '✓ In the itinerary'}),
+                h('span', {class: 'act-name', text: a.title}),
+                a.area_name ? h('span', {class: 'trek-chip', text: a.area_name}) : null,
+                h('span', {class: 'turnout plain', text: scoreText(a) + ' avg · ' + turnoutText(a)}),
+                h('span', {class: 'spacer', style: 'flex:1 1 auto'}),
+                overflow(a)
+            ]);
+        }
+
+        // ---- overflow menu -------------------------------------------------
+        function overflow(a) {
+            var wrap = h('div', {class: 'menu-wrap'});
+            var btn = h('button', {
+                class: 'menu-btn',
+                type: 'button',
+                text: '···',
+                'aria-label': 'More actions for ' + a.title,
+                'aria-expanded': 'false'
+            });
+            wrap.appendChild(btn);
+
+            var open = null;
+
+            function close() {
+                if (!open) return;
+                open.remove();
+                open = null;
+                btn.setAttribute('aria-expanded', 'false');
+                document.removeEventListener('click', onDoc, true);
+                document.removeEventListener('keydown', onKey, true);
             }
 
-            // Star click handlers
-            panel.querySelectorAll('.stars').forEach(function (container) {
-                var activityId = parseInt(container.getAttribute('data-activity'), 10);
-                container.querySelectorAll('.star').forEach(function (star) {
-                    star.onclick = function () {
-                        var score = parseInt(star.getAttribute('data-score'), 10);
-                        vote(activityId, score, panel);
+            function onDoc(e) {
+                if (!wrap.contains(e.target)) close();
+            }
+
+            function onKey(e) {
+                if (e.key === 'Escape') { close(); btn.focus(); }
+            }
+
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (open) { close(); return; }
+
+                var items = [
+                    h('button', {type: 'button', text: 'Edit', on: {click: function () { close(); openActivityModal(a); }}})
+                ];
+
+                // Nothing here undoes "add to trip". The itinerary is the source
+                // of truth: delete the place there and Vox notices on the next
+                // load, putting the proposal back up for decision by itself.
+                if (a.trek_place_id == null) {
+                    items.push(h('button', {
+                        type: 'button', text: 'Add to trip',
+                        on: {click: function () { close(); openAddToTripModal(a); }}
+                    }));
+                }
+
+                if (a.can_delete) {
+                    items.push(h('button', {
+                        class: 'danger', type: 'button', text: 'Delete proposal',
+                        on: {click: function () { close(); confirmDelete(a); }}
+                    }));
+                }
+
+                open = h('div', {class: 'menu trek-menu-enter', role: 'menu'}, items);
+                wrap.appendChild(open);
+                btn.setAttribute('aria-expanded', 'true');
+                document.addEventListener('click', onDoc, true);
+                document.addEventListener('keydown', onKey, true);
+            });
+
+            return wrap;
+        }
+
+        // ---- destructive + itinerary actions --------------------------------
+        function confirmDelete(a) {
+            ask({
+                title: 'Delete this proposal?',
+                message: 'Every vote cast on "' + a.title + '" goes with it. This cannot be undone.',
+                confirmLabel: 'Delete',
+                danger: true
+            }).then(function (yes) {
+                if (!yes) return;
+                api('/activities?id=' + encodeURIComponent(a.id), 'DELETE')
+                    .then(function () {
+                        trek.notify('success', 'Proposal deleted');
+                        loadBoard();
+                    })
+                    .catch(function (e) { trek.notify('error', e && e.message ? e.message : 'Could not delete'); });
+            });
+        }
+
+        // ---- modal shell ----------------------------------------------------
+        function modal(title, fields, primaryLabel, onSubmit, opts) {
+            opts = opts || {};
+            var box = h('div', {class: 'modal trek-modal-enter'});
+            var backdrop = h('div', {class: 'backdrop trek-backdrop-enter'}, [box]);
+            var closers = [];
+
+            function close() {
+                backdrop.remove();
+                document.removeEventListener('keydown', onKey, true);
+                var fns = closers;
+                closers = [];
+                fns.forEach(function (fn) { fn(); });
+            }
+
+            function onKey(e) {
+                if (e.key === 'Escape') close();
+            }
+
+            backdrop.addEventListener('click', function (e) {
+                if (e.target === backdrop) close();
+            });
+            document.addEventListener('keydown', onKey, true);
+
+            box.appendChild(h('h2', {text: title}));
+            fields.forEach(function (f) { box.appendChild(f); });
+
+            var submit = h('button', {
+                class: 'trek-btn grow ' + (opts.danger ? 'trek-btn--danger' : 'trek-btn--primary'),
+                type: 'button',
+                text: primaryLabel
+            });
+            submit.addEventListener('click', function () {
+                submit.disabled = true;
+                var done = onSubmit(close);
+                if (done && done.then) done.catch(function () {}).then(function () { submit.disabled = false; });
+                else submit.disabled = false;
+            });
+
+            box.appendChild(h('div', {class: 'modal-actions'}, [
+                h('button', {class: 'trek-btn trek-btn--ghost', type: 'button', text: opts.cancelLabel || 'Cancel', on: {click: close}}),
+                submit
+            ]));
+
+            document.body.appendChild(backdrop);
+            setTimeout(function () { submit.focus(); }, 40);
+            return {
+                close: close,
+                box: box,
+                onClose: function (fn) { closers.push(fn); }
+            };
+        }
+
+        /**
+         * Ask before doing something destructive.
+         *
+         * The host renders a native dialog when it can, and that is the nicer
+         * one. But it is not always there: an older design kit has no
+         * trek.confirm at all, and a frame sandboxed without allow-modals
+         * silently answers "no" to any dialog it cannot draw. Either way the
+         * click would appear to do nothing, which for a destructive action is
+         * the worst possible failure — so there is always our own dialog behind
+         * it. Resolves false on cancel, Escape or a click on the backdrop.
+         */
+        function ask(opts) {
+            if (window.trek && typeof trek.confirm === 'function') {
+                try {
+                    var p = trek.confirm(opts);
+                    if (p && typeof p.then === 'function') return p;
+                } catch (_) {
+                    /* host refused outright — fall through to our own */
+                }
+            }
+            return ownConfirm(opts);
+        }
+
+        function ownConfirm(opts) {
+            return new Promise(function (resolve) {
+                var settled = false;
+                function done(v) {
+                    if (settled) return;
+                    settled = true;
+                    resolve(v);
+                }
+                var m = modal(
+                    opts.title || 'Are you sure?',
+                    [h('p', {class: 'trek-muted', style: 'margin:0;font-size:13.5px', text: opts.message || ''})],
+                    opts.confirmLabel || 'Confirm',
+                    function (close) { done(true); close(); },
+                    {danger: !!opts.danger, cancelLabel: opts.cancelLabel}
+                );
+                // Cancel, Escape and the backdrop all route through close().
+                m.onClose(function () { done(false); });
+            });
+        }
+
+        function field(label, control, hint) {
+            return h('div', {class: 'field'}, [
+                h('label', {class: 'trek-label', text: label}),
+                control,
+                hint ? h('span', {class: 'hint', text: hint}) : null
+            ]);
+        }
+
+        // ---- propose / edit --------------------------------------------------
+        function openActivityModal(existing) {
+            var isEdit = !!existing;
+            var titleInput = h('input', {class: 'trek-input', placeholder: 'What should we do?', value: isEdit ? existing.title : ''});
+            var descInput = h('textarea', {class: 'trek-textarea', rows: 2, placeholder: 'Anything the group should know?'});
+            descInput.value = isEdit ? (existing.description || '') : '';
+            var urlInput = h('input', {class: 'trek-input', placeholder: 'https://…', value: isEdit ? (existing.url || '') : ''});
+
+            var areas = (S.board.areas || []).slice().sort(function (x, y) { return x.name.localeCompare(y.name); });
+            var areaSelect = h('select', {class: 'trek-select'}, [h('option', {value: '', text: 'No area'})]
+                .concat(areas.map(function (ar) {
+                    return h('option', {
+                        value: String(ar.id), text: ar.name,
+                        selected: isEdit && String(existing.area_id) === String(ar.id)
+                    });
+                }))
+                .concat([h('option', {value: '__new', text: '+ New area…'})]));
+
+            var newArea = h('input', {class: 'trek-input', placeholder: 'Kyoto, Day 3, …'});
+            var newAreaWrap = h('div', {style: 'display:none;margin-top:6px'}, [newArea]);
+
+            areaSelect.addEventListener('change', function () {
+                var isNew = areaSelect.value === '__new';
+                newAreaWrap.style.display = isNew ? 'block' : 'none';
+                if (isNew) newArea.focus();
+            });
+
+            var fields = [
+                field('Title', titleInput),
+                field('Notes', descInput),
+                field('Link', urlInput),
+                h('div', {class: 'field'}, [
+                    h('label', {class: 'trek-label', text: 'Area'}),
+                    areaSelect,
+                    newAreaWrap,
+                    h('span', {class: 'hint', text: 'A label to group proposals by — a city, a day. Not a map location.'})
+                ])
+            ];
+
+            modal(isEdit ? 'Edit proposal' : 'Propose an activity', fields, isEdit ? 'Save' : 'Propose', function (close) {
+                var title = titleInput.value.trim();
+                if (!title) {
+                    trek.notify('warning', 'A title is needed');
+                    titleInput.focus();
+                    return;
+                }
+
+                return resolveArea().then(function (areaId) {
+                    var payload = {
+                        title: title,
+                        description: descInput.value.trim(),
+                        url: urlInput.value.trim(),
+                        area_id: areaId,
+                        trip_id: S.tripId
                     };
+                    if (isEdit) payload.id = existing.id;
+                    return api('/activities', isEdit ? 'PUT' : 'POST', payload);
+                }).then(function () {
+                    close();
+                    trek.notify('success', isEdit ? 'Proposal updated' : 'Proposal added');
+                    return loadBoard();
+                }).catch(function (e) {
+                    trek.notify('error', e && e.message ? e.message : 'Could not save');
+                    throw e;
                 });
             });
 
-            // Edit handlers
-            panel.querySelectorAll('[data-edit]').forEach(function (btn) {
-                btn.onclick = function (e) {
-                    e.stopPropagation();
-                    var activityId = parseInt(btn.getAttribute('data-edit'), 10);
-                    showEditModal(activityId, panel);
-                };
-            });
-
-            // Delete handlers
-            panel.querySelectorAll('[data-delete]').forEach(function (btn) {
-                btn.onclick = function (e) {
-                    e.stopPropagation();
-                    var activityId = parseInt(btn.getAttribute('data-delete'), 10);
-                    showDeleteConfirm(activityId, panel);
-                };
-            });
-
-            addFab(panel);
-            armPanelObserver();
-        }
-
-        // ---- Delete with confirmation -------------------------------------------
-        function showDeleteConfirm(activityId, panel) {
-            var card = panel.querySelector('.card[data-activity="' + activityId + '"]');
-            if (!card) return;
-
-            var existing = card.querySelector('.delete-confirm');
-            if (existing) existing.remove();
-
-            var confirmDiv = document.createElement('div');
-            confirmDiv.className = 'delete-confirm';
-            confirmDiv.innerHTML =
-                '<span class="muted">⚠️ Delete this activity? This action cannot be undone.</span>' +
-                '<button class="btn danger sm" id="confirm-delete-' + activityId + '">Yes, delete</button>' +
-                '<button class="btn sec sm" id="cancel-delete-' + activityId + '">Cancel</button>';
-
-            card.appendChild(confirmDiv);
-
-            confirmDiv.querySelector('#confirm-delete-' + activityId).onclick = function () {
-                deleteActivity(activityId, panel);
-            };
-            confirmDiv.querySelector('#cancel-delete-' + activityId).onclick = function () {
-                confirmDiv.remove();
-            };
-        }
-
-        // ---- Delete -----------------------------------------------------------
-        function deleteActivity(activityId, panel) {
-            invoke('/activities?id=' + activityId, 'DELETE')
-                .then(function () {
-                    notify('success', 'Activity deleted');
-                    loadData().then(function () {
-                        renderActivities(panel);
-                    });
-                })
-                .catch(function (e) {
-                    notify('error', 'Failed to delete: ' + e.message);
-                });
-        }
-
-        // ---- Vote -------------------------------------------------------------
-        function vote(activityId, score, panel) {
-            if (!hasTrip()) {
-                notify('error', 'No trip selected');
-                return;
-            }
-            var q = '?tripId=' + encodeURIComponent(state.currentTripId);
-            invoke('/vote', 'POST', {activityId: activityId, score: score})
-                .then(function () {
-                    return Promise.all([
-                        invoke('/votes?activityId=' + activityId, 'GET'),
-                        invoke('/stats' + q, 'GET')
-                    ]);
-                })
-                .then(function (results) {
-                    state.votes[activityId] = results[0] || [];
-                    state.stats = results[1] || [];
-                    notify('success', 'Vote submitted!');
-                    renderActivities(panel);
-                })
-                .catch(function (e) {
-                    notify('error', 'Failed to vote: ' + e.message);
-                });
-        }
-
-        // ---- Ranking section -------------------------------------------------
-        SECTIONS.ranking = function (panel) {
-            if (!hasTrip()) return Promise.resolve(renderNoTrip(panel));
-            return loadData().then(function () {
-                renderRanking(panel);
-            });
-        };
-
-        function renderRanking(panel) {
-            var filtered = state.activities;
-            if (state.selectedPlace === 'none') {
-                filtered = filtered.filter(function (a) {
-                    return !a.place_id;
-                });
-            } else if (state.selectedPlace !== 'all') {
-                filtered = filtered.filter(function (a) {
-                    return String(a.place_id) === state.selectedPlace;
-                });
+            function resolveArea() {
+                if (areaSelect.value !== '__new') {
+                    return Promise.resolve(areaSelect.value ? parseInt(areaSelect.value, 10) : null);
+                }
+                var name = newArea.value.trim();
+                if (!name) return Promise.resolve(null);
+                return api('/areas', 'POST', {name: name, trip_id: S.tripId}).then(function (ar) { return ar.id; });
             }
 
-            var sorted = filtered.slice().sort(function (a, b) {
-                var sa = state.stats.find(function (s) {
-                    return s.id === a.id;
-                });
-                var sb = state.stats.find(function (s) {
-                    return s.id === b.id;
-                });
-                return (sb ? sb.consensus || 0 : 0) - (sa ? sa.consensus || 0 : 0) ||
-                    (sb ? sb.avg_score || 0 : 0) - (sa ? sa.avg_score || 0 : 0);
-            });
-
-            var html = '<div class="card"><h2>' + svg('trophy') + 'Ranking</h2>';
-            html += '<div class="muted" style="font-size:12.5px;margin:-4px 0 12px">' +
-                'Activities ranked by consensus and average score' +
-                '</div>';
-
-            // Place filter bar for ranking (no trip filter)
-            html += '<div class="filter-bar">';
-            html += '<select class="fld" id="rank-place-filter">';
-            var selectedAll = state.selectedPlace === 'all' ? 'selected' : '';
-            var selectedNone = state.selectedPlace === 'none' ? 'selected' : '';
-            html += '<option value="all" ' + selectedAll + '>📍 All places</option>';
-            html += '<option value="none" ' + selectedNone + '>📌 No place</option>';
-            state.places.forEach(function (p) {
-                var selected = state.selectedPlace === String(p.id) ? 'selected' : '';
-                html += '<option value="' + esc(p.id) + '" ' + selected + '>' + esc(p.name || p.title || 'Place') + '</option>';
-            });
-            html += '</select>';
-            html += '</div>';
-
-            if (sorted.length === 0) {
-                html += '<div class="faint">No activities for this place. Create one to start ranking!</div>';
-            } else {
-                sorted.forEach(function (activity, i) {
-                    var stats = state.stats.find(function (s) {
-                        return s.id === activity.id;
-                    });
-                    var medals = ['🥇', '🥈', '🥉'];
-                    var medal = medals[i] || '#' + (i + 1);
-                    var avg = stats ? parseFloat(stats.avg_score || 0) : 0;
-                    var consensus = stats ? stats.consensus || 0 : 0;
-                    var voteCount = stats ? stats.vote_count || 0 : 0;
-                    var placeName = activity.place_id ? getPlaceName(activity.place_id) : '';
-                    var hasTrekPlace = activity.trek_place_id ? true : false;
-
-                    html += '<div class="activity-item">' +
-                        '<div class="between">' +
-                        '<div class="row">' +
-                        '<span style="font-size:20px;font-weight:700;color:var(--accent);min-width:40px">' + medal + '</span>' +
-                        '<div><strong>' + esc(activity.title) + '</strong>' +
-                        (placeName ? ' <span class="chip" style="font-size:10px">📍 ' + esc(placeName) + '</span>' : '') +
-                        (hasTrekPlace ? ' <span class="chip success" style="font-size:10px">✅ TREK</span>' : '') +
-                        '</div>' +
-                        '</div>' +
-                        '<div class="row">' +
-                        '<span class="chip">💯 ' + consensus + '%</span>' +
-                        '<span class="chip">⭐ ' + avg.toFixed(1) + '</span>' +
-                        // "Create in TREK" button
-                        (hasTrekPlace ?
-                                '<button class="btn sec sm" disabled style="opacity:0.5" title="Already in TREK">✅</button>' :
-                                '<button class="btn sm" data-create-trek="' + activity.id + '" style="background:var(--success);color:white">📅 Create in TREK</button>'
-                        ) +
-                        '</div>' +
-                        '</div>' +
-                        '<div class="row" style="margin-top:4px;gap:12px;font-size:11px;color:var(--text-muted)">' +
-                        '<span>' + esc(participationLabel(stats, voteCount)) + '</span>' +
-                        '<span>📊 ' + voteCount + ' votes</span>' +
-                        /*'<span class="chip" style="font-size:10px">👤 ' + (stats ? stats.total_members || 0 : 0) + ' members</span>' +*/
-                        '</div>' +
-                        '<div class="progress"><span style="width:' + consensus + '%"></span></div>' +
-                        '</div>';
-                });
-            }
-
-            html += '</div>';
-            panel.innerHTML = html;
-
-            // Place filter handler
-            var filterSelect = panel.querySelector('#rank-place-filter');
-            if (filterSelect) {
-                filterSelect.onchange = function () {
-                    state.selectedPlace = this.value;
-                    renderRanking(panel);
-                };
-            }
-
-            // Handler for "Create in TREK"
-            panel.querySelectorAll('[data-create-trek]').forEach(function (btn) {
-                btn.onclick = function () {
-                    var activityId = parseInt(btn.getAttribute('data-create-trek'), 10);
-                    showCreateTrekModal(activityId, panel);
-                };
-            });
-
-            armPanelObserver();
+            setTimeout(function () { titleInput.focus(); titleInput.select(); }, 60);
         }
 
-        // ---- FAB --------------------------------------------------------------
-        function addFab(panel) {
-            var existing = panel.querySelector('.fab');
-            if (existing) existing.remove();
-
-            var fab = document.createElement('button');
-            fab.className = 'fab';
-            fab.innerHTML = svg('plus');
-            fab.onclick = function () {
-                showCreateModal(panel);
-            };
-            panel.appendChild(fab);
-        }
-
-        // ---- create modal -----------------------------------------------------
-        function showCreateModal(panel) {
-            // Check that we have a tripId
-            if (!state.currentTripId) {
-                notify('error', 'No trip selected');
-                return;
-            }
-
-            var overlay = document.createElement('div');
-            overlay.className = 'modal-overlay';
-            overlay.onclick = function (e) {
-                if (e.target === overlay) overlay.remove();
-            };
-
-            var placeOptions = '';
-            state.places.forEach(function (p) {
-                placeOptions += '<option value="' + esc(p.id) + '">' + esc(p.name || p.title || 'Place') + '</option>';
+        // ---- add to trip -----------------------------------------------------
+        function openAddToTripModal(a) {
+            var nameInput = h('input', {class: 'trek-input', value: a.title});
+            // A good geocoding query, not a claim about the address: the area is
+            // a grouping label, so it is a hint here and nothing more.
+            var addrInput = h('input', {
+                class: 'trek-input',
+                value: a.area_name ? a.title + ', ' + a.area_name : a.title,
+                placeholder: 'Address or place name'
             });
+            var latInput = h('input', {class: 'trek-input', placeholder: 'Latitude', inputmode: 'decimal'});
+            var lngInput = h('input', {class: 'trek-input', placeholder: 'Longitude', inputmode: 'decimal'});
+            var notesInput = h('textarea', {class: 'trek-textarea', rows: 2});
+            notesInput.value = 'From Vox: ' + a.title;
 
-            overlay.innerHTML =
-                '<div class="modal-content" onclick="event.stopPropagation();">' +
-                '<h3 style="margin-bottom:16px;">Propose an Activity</h3>' +
-                '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Title *</label>' +
-                '<input class="fld" id="modal-title" placeholder="What do you want to do?" />' +
-                '</div>' +
-                '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Description</label>' +
-                '<textarea class="fld" id="modal-desc" rows="2" placeholder="Add some details..."></textarea>' +
-                '</div>' +
-                '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Link (optional)</label>' +
-                '<input class="fld" id="modal-url" placeholder="https://..." />' +
-                '</div>' +
-                '<div style="margin-bottom:16px">' +
-                '<label class="lbl">Place</label>' +
-                '<div class="row" style="gap:6px">' +
-                '<select class="fld" id="modal-place" style="flex:1">' +
-                '<option value="">None</option>' +
-                placeOptions +
-                '</select>' +
-                '<button class="btn sec sm btn-add-place" id="modal-add-place" title="Add new place">' + svg('plus') + '</button>' +
-                '</div>' +
-                '<div id="modal-new-place-container" style="display:none;margin-top:8px">' +
-                '<div class="row" style="gap:6px">' +
-                '<input class="fld" id="modal-new-place-name" placeholder="New place name..." style="flex:1" />' +
-                '<button class="btn sm" id="modal-save-place">Save</button>' +
-                '<button class="btn sec sm" id="modal-cancel-place">Cancel</button>' +
-                '</div>' +
-                '</div>' +
-                '</div>' +
-                '<div class="row">' +
-                '<button class="btn sec" onclick="this.closest(\'.modal-overlay\').remove()">Cancel</button>' +
-                '<button class="btn" id="modal-create" style="flex:1">Propose</button>' +
-                '</div>' +
-                '</div>';
+            var status = h('span', {class: 'hint'});
+            var searchBtn = h('button', {class: 'trek-btn trek-btn--secondary', type: 'button', text: 'Search'});
 
-            document.body.appendChild(overlay);
-
-            // Place addition handling
-            var addPlaceBtn = overlay.querySelector('#modal-add-place');
-            var newPlaceContainer = overlay.querySelector('#modal-new-place-container');
-            var newPlaceInput = overlay.querySelector('#modal-new-place-name');
-            var savePlaceBtn = overlay.querySelector('#modal-save-place');
-            var cancelPlaceBtn = overlay.querySelector('#modal-cancel-place');
-
-            addPlaceBtn.onclick = function () {
-                newPlaceContainer.style.display = 'block';
-                newPlaceInput.focus();
-                addPlaceBtn.disabled = true;
-            };
-
-            cancelPlaceBtn.onclick = function () {
-                newPlaceContainer.style.display = 'none';
-                newPlaceInput.value = '';
-                addPlaceBtn.disabled = false;
-            };
-
-            savePlaceBtn.onclick = function () {
-                var placeName = newPlaceInput.value.trim();
-                if (!placeName) {
-                    notify('warning', 'Please enter a place name');
+            searchBtn.addEventListener('click', function () {
+                var q = addrInput.value.trim();
+                if (!q) {
+                    status.textContent = 'Type something to search for.';
                     return;
                 }
-
-                // Use tripId from context
-                invoke('/places', 'POST', {name: placeName, trip_id: state.currentTripId})
-                    .then(function (newPlace) {
-                        state.places.push(newPlace);
-
-                        var select = overlay.querySelector('#modal-place');
-                        var option = document.createElement('option');
-                        option.value = newPlace.id;
-                        option.text = placeName;
-                        select.appendChild(option);
-                        select.value = newPlace.id;
-
-                        newPlaceContainer.style.display = 'none';
-                        newPlaceInput.value = '';
-                        addPlaceBtn.disabled = false;
-
-                        notify('success', 'Place created!');
+                searchBtn.disabled = true;
+                status.textContent = 'Searching…';
+                api('/geocode?address=' + encodeURIComponent(q))
+                    .then(function (r) {
+                        if (r.success) {
+                            latInput.value = r.lat.toFixed(6);
+                            lngInput.value = r.lng.toFixed(6);
+                            addrInput.value = r.address || q;
+                            status.textContent = 'Found on the map.';
+                        } else {
+                            status.textContent = (r.error || 'No match') + ' — you can still add it without coordinates.';
+                        }
                     })
-                    .catch(function (e) {
-                        notify('error', 'Failed to create place: ' + e.message);
-                    });
-            };
+                    .catch(function () {
+                        status.textContent = 'Search unavailable — you can still add it without coordinates.';
+                    })
+                    .then(function () { searchBtn.disabled = false; });
+            });
 
-            newPlaceInput.onkeydown = function (e) {
-                if (e.key === 'Enter') {
-                    savePlaceBtn.click();
-                }
-                if (e.key === 'Escape') {
-                    cancelPlaceBtn.click();
-                }
-            };
+            var fields = [
+                field('Name in the itinerary', nameInput),
+                h('div', {class: 'field'}, [
+                    h('label', {class: 'trek-label', text: 'Address'}),
+                    h('div', {class: 'pair'}, [addrInput, searchBtn]),
+                    status
+                ]),
+                h('div', {class: 'field'}, [
+                    h('label', {class: 'trek-label', text: 'Coordinates'}),
+                    h('div', {class: 'pair'}, [latInput, lngInput]),
+                    h('span', {class: 'hint', text: 'Optional. Leave empty and Vox will try to find them.'})
+                ]),
+                field('Notes', notesInput)
+            ];
 
-            // Activity creation
-            overlay.querySelector('#modal-create').onclick = function () {
-                var title = overlay.querySelector('#modal-title').value.trim();
-                var description = overlay.querySelector('#modal-desc').value.trim();
-                var url = overlay.querySelector('#modal-url').value.trim();
-                var placeId = overlay.querySelector('#modal-place').value;
+            if (a.missing && a.missing.length) {
+                fields.unshift(h('div', {class: 'trek-chip trek-chip--warning', style: 'align-self:flex-start', text: waitingText(a)}));
+            }
 
-                if (!title) {
-                    notify('warning', 'Please enter a title');
+            modal('Add to the trip', fields, 'Add to trip', function (close) {
+                var name = nameInput.value.trim();
+                if (!name) {
+                    trek.notify('warning', 'A name is needed');
+                    nameInput.focus();
                     return;
                 }
-
                 var payload = {
-                    title: title,
-                    description: description,
-                    url: url,
-                    trip_id: state.currentTripId
+                    activityId: a.id,
+                    name: name,
+                    address: addrInput.value.trim(),
+                    notes: notesInput.value.trim(),
+                    url: a.url || ''
                 };
-                if (placeId) payload.place_id = parseInt(placeId, 10);
+                var lat = parseFloat(latInput.value);
+                var lng = parseFloat(lngInput.value);
+                if (isFinite(lat) && isFinite(lng)) {
+                    payload.lat = lat;
+                    payload.lng = lng;
+                }
 
-                invoke('/activities', 'POST', payload)
-                    .then(function () {
-                        overlay.remove();
-                        notify('success', 'Activity proposed!');
-                        loadData().then(function () {
-                            renderActivities(panel);
-                        });
+                return api('/add-to-trip', 'POST', payload)
+                    .then(function (r) {
+                        close();
+                        trek.notify('success', r.has_coordinates
+                            ? 'Added to the itinerary, on the map'
+                            : 'Added to the itinerary, without coordinates');
+                        return loadBoard();
                     })
                     .catch(function (e) {
-                        notify('error', 'Failed to create: ' + e.message);
+                        trek.notify('error', e && e.message ? e.message : 'Could not add it');
+                        throw e;
                     });
-            };
-
-            setTimeout(function () {
-                var inp = overlay.querySelector('#modal-title');
-                if (inp) inp.focus();
-            }, 100);
+            });
         }
 
-        // ---- Edit modal --------------------------------------------------------
-        function showEditModal(activityId, panel) {
-            var activity = state.activities.find(function (a) {
-                return a.id === activityId;
-            });
-            if (!activity) {
-                notify('error', 'Activity not found');
-                return;
-            }
+        // ---- placeholders -----------------------------------------------------
+        function noMatches() {
+            var bits = [];
+            if (S.query.trim()) bits.push('"' + S.query.trim() + '"');
+            if (S.lens.mine) bits.push('needs my vote');
+            if (S.lens.split) bits.push('divided');
+            if (S.lens.ready) bits.push('everyone voted');
 
-            var overlay = document.createElement('div');
-            overlay.className = 'modal-overlay';
-            overlay.onclick = function (e) {
-                if (e.target === overlay) overlay.remove();
-            };
-
-            var placeOptions = '';
-            state.places.forEach(function (p) {
-                var selected = activity.place_id && String(p.id) === String(activity.place_id) ? 'selected' : '';
-                placeOptions += '<option value="' + esc(p.id) + '" ' + selected + '>' + esc(p.name || p.title || 'Place') + '</option>';
-            });
-
-            overlay.innerHTML =
-                '<div class="modal-content" onclick="event.stopPropagation();">' +
-                '<h3 style="margin-bottom:16px;">Edit Activity</h3>' +
-                '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Title *</label>' +
-                '<input class="fld" id="modal-edit-title" value="' + esc(activity.title) + '" placeholder="What do you want to do?" />' +
-                '</div>' +
-                '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Description</label>' +
-                '<textarea class="fld" id="modal-edit-desc" rows="2" placeholder="Add some details...">' + esc(activity.description || '') + '</textarea>' +
-                '</div>' +
-                '<div style="margin-bottom:14px">' +
-                '<label class="lbl">Link (optional)</label>' +
-                '<input class="fld" id="modal-edit-url" value="' + esc(activity.url || '') + '" placeholder="https://..." />' +
-                '</div>' +
-                '<div style="margin-bottom:16px">' +
-                '<label class="lbl">Place</label>' +
-                '<div class="row" style="gap:6px">' +
-                '<select class="fld" id="modal-edit-place" style="flex:1">' +
-                '<option value="">None</option>' +
-                placeOptions +
-                '</select>' +
-                '<button class="btn sec sm btn-add-place" id="modal-edit-add-place" title="Add new place">' + svg('plus') + '</button>' +
-                '</div>' +
-                '<div id="modal-edit-new-place-container" style="display:none;margin-top:8px">' +
-                '<div class="row" style="gap:6px">' +
-                '<input class="fld" id="modal-edit-new-place-name" placeholder="New place name..." style="flex:1" />' +
-                '<button class="btn sm" id="modal-edit-save-place">Save</button>' +
-                '<button class="btn sec sm" id="modal-edit-cancel-place">Cancel</button>' +
-                '</div>' +
-                '</div>' +
-                '</div>' +
-                '<div class="row">' +
-                '<button class="btn sec" onclick="this.closest(\'.modal-overlay\').remove()">Cancel</button>' +
-                '<button class="btn" id="modal-edit-save" style="flex:1">Save Changes</button>' +
-                '</div>' +
-                '</div>';
-
-            document.body.appendChild(overlay);
-
-            // Place addition handling
-            var addPlaceBtn = overlay.querySelector('#modal-edit-add-place');
-            var newPlaceContainer = overlay.querySelector('#modal-edit-new-place-container');
-            var newPlaceInput = overlay.querySelector('#modal-edit-new-place-name');
-            var savePlaceBtn = overlay.querySelector('#modal-edit-save-place');
-            var cancelPlaceBtn = overlay.querySelector('#modal-edit-cancel-place');
-
-            addPlaceBtn.onclick = function () {
-                newPlaceContainer.style.display = 'block';
-                newPlaceInput.focus();
-                addPlaceBtn.disabled = true;
-            };
-
-            cancelPlaceBtn.onclick = function () {
-                newPlaceContainer.style.display = 'none';
-                newPlaceInput.value = '';
-                addPlaceBtn.disabled = false;
-            };
-
-            savePlaceBtn.onclick = function () {
-                var placeName = newPlaceInput.value.trim();
-                if (!placeName) {
-                    notify('warning', 'Please enter a place name');
-                    return;
-                }
-
-                invoke('/places', 'POST', {name: placeName, trip_id: state.currentTripId})
-                    .then(function (newPlace) {
-                        state.places.push(newPlace);
-
-                        var select = overlay.querySelector('#modal-edit-place');
-                        var option = document.createElement('option');
-                        option.value = newPlace.id;
-                        option.text = placeName;
-                        select.appendChild(option);
-                        select.value = newPlace.id;
-
-                        newPlaceContainer.style.display = 'none';
-                        newPlaceInput.value = '';
-                        addPlaceBtn.disabled = false;
-
-                        notify('success', 'Place created!');
-                    })
-                    .catch(function (e) {
-                        notify('error', 'Failed to create place: ' + e.message);
-                    });
-            };
-
-            newPlaceInput.onkeydown = function (e) {
-                if (e.key === 'Enter') {
-                    savePlaceBtn.click();
-                }
-                if (e.key === 'Escape') {
-                    cancelPlaceBtn.click();
-                }
-            };
-
-            // Save edited activity
-            overlay.querySelector('#modal-edit-save').onclick = function () {
-                var title = overlay.querySelector('#modal-edit-title').value.trim();
-                var description = overlay.querySelector('#modal-edit-desc').value.trim();
-                var url = overlay.querySelector('#modal-edit-url').value.trim();
-                var placeId = overlay.querySelector('#modal-edit-place').value;
-
-                if (!title) {
-                    notify('warning', 'Please enter a title');
-                    return;
-                }
-
-                var payload = {
-                    id: activityId,
-                    title: title,
-                    description: description,
-                    url: url,
-                    trip_id: state.currentTripId
-                };
-                if (placeId) payload.place_id = parseInt(placeId, 10);
-
-                invoke('/activities', 'PUT', payload)
-                    .then(function () {
-                        overlay.remove();
-                        notify('success', 'Activity updated!');
-                        loadData().then(function () {
-                            renderActivities(panel);
-                        });
-                    })
-                    .catch(function (e) {
-                        notify('error', 'Failed to update: ' + e.message);
-                    });
-            };
-
-            setTimeout(function () {
-                var inp = overlay.querySelector('#modal-edit-title');
-                if (inp) inp.focus();
-                inp.select();
-            }, 100);
+            return h('div', {class: 'trek-card empty'}, [
+                h('h2', {text: 'Nothing matches'}),
+                h('p', {text: 'No proposal matches ' + bits.join(' + ') + '.'}),
+                h('button', {
+                    class: 'trek-btn trek-btn--secondary',
+                    type: 'button',
+                    text: 'Clear search and filters',
+                    on: {
+                        click: function () {
+                            S.query = '';
+                            S.lens = {mine: false, split: false, ready: false};
+                            render();
+                        }
+                    }
+                })
+            ]);
         }
 
-        // ---- start ------------------------------------------------------------
-        post({type: 'trek:ready'});
-        setTimeout(function () {
-            if (!booted) {
-                ctx.theme = null;
-                document.documentElement.dataset.theme = resolveTheme({});
-                booted = true;
-                boot();
-            }
-        }, 800);
+        function firstRun() {
+            return h('div', {class: 'trek-card empty'}, [
+                h('h2', {text: 'Nothing on the table yet'}),
+                h('p', {text: 'Propose something you would like to do. Everyone in the trip rates it, the group\'s picks rise to the top, and the winners go straight into the itinerary.'}),
+                h('button', {
+                    class: 'trek-btn trek-btn--primary',
+                    type: 'button',
+                    text: '+ Propose the first activity',
+                    on: {click: function () { openActivityModal(null); }}
+                })
+            ]);
+        }
+
+        function noTrip() {
+            return h('div', {class: 'trek-card empty'}, [
+                h('h2', {text: 'No trip open'}),
+                h('p', {text: 'Vox lives inside a trip. Open one and pick the Vox tab to vote on its activities.'})
+            ]);
+        }
+
+        // ---- boot --------------------------------------------------------------
+        if (!window.trek) {
+            app.appendChild(h('div', {class: 'trek-card'}, [
+                h('div', {class: 'trek-title', text: 'Vox needs the TREK host'}),
+                h('p', {class: 'trek-muted', text: 'This page runs inside a TREK trip. Open it from the Vox tab.'})
+            ]));
+            return;
+        }
+
+        trek.onContext(function (c) {
+            var tripId = c && c.tripId != null ? String(c.tripId) : null;
+            var changed = tripId !== S.tripId;
+            S.tripId = tripId;
+            S.userId = c && c.userId != null ? String(c.userId) : null;
+            if (changed) loadBoard();
+            else render();
+        });
+
+        // Core activity on the trip in view arrives as a name only — a place
+        // deleted by hand is exactly the case /board reconciles, so refetch.
+        trek.onEvent(function (event) {
+            if (/^place:/.test(String(event || ''))) loadBoard();
+        });
+
+        render();
     })();
 </script>
 </body>

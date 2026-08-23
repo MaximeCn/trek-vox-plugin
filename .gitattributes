@@ -1,0 +1,13 @@
+# The packed artifact's sha256 is pinned by the TREK-Plugins registry, so the
+# bytes have to come out the same on every machine that builds it. Without this,
+# a checkout on Windows with core.autocrlf=true rewrites the sources to CRLF and
+# `trek-plugin pack` produces a different hash than the one the registry
+# recorded — an install that fails a checksum for no visible reason.
+* text=auto eol=lf
+
+# Binaries git must never touch.
+*.png binary
+*.jpg binary
+*.gif binary
+*.zip binary
+*.ico binary
