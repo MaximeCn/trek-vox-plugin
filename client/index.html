@@ -614,6 +614,49 @@
             color: var(--text-muted, #888);
         }
 
+        /* Suggestions sit in the flow, not in a floating layer, so nothing can
+           clip them against the dialog's scroll edge. */
+        .suggest {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 2px;
+            align-items: center;
+        }
+
+        .suggest:empty {
+            display: none;
+        }
+
+        .suggest-item {
+            appearance: none;
+            font: inherit;
+            font-size: 12.5px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            background: none;
+            color: var(--text-secondary, #555);
+            border: 1px solid var(--border-faint, rgba(128, 128, 128, .28));
+        }
+
+        .suggest-item:hover {
+            background: var(--bg-hover, rgba(128, 128, 128, .12));
+            color: var(--text-primary, #111);
+        }
+
+        .suggest-item.on {
+            background: var(--accent, #333);
+            color: var(--accent-text, #fff);
+            border-color: transparent;
+        }
+
+        .suggest-new {
+            font-size: 11.5px;
+            color: var(--text-muted, #888);
+            padding: 3px 2px;
+        }
+
         .pair {
             display: flex;
             gap: 6px;
@@ -624,10 +667,18 @@
             min-width: 0;
         }
 
+        /* When the dialog does have to scroll, the buttons stay put instead of
+           disappearing off the bottom. The negative offset cancels the dialog's
+           own padding so it settles flush against the edge. */
         .modal-actions {
             display: flex;
             gap: 8px;
             margin-top: 2px;
+            position: sticky;
+            bottom: -20px;
+            padding: 12px 0;
+            margin-bottom: -20px;
+            background: var(--bg-card, #fff);
         }
 
         .modal-actions .grow {
@@ -1617,35 +1668,16 @@
             descInput.value = isEdit ? (existing.description || '') : '';
             var urlInput = h('input', {class: 'trek-input', placeholder: 'https://…', value: isEdit ? (existing.url || '') : ''});
 
-            var areas = (S.board.areas || []).slice().sort(function (x, y) { return x.name.localeCompare(y.name); });
-            var areaSelect = h('select', {class: 'trek-select'}, [h('option', {value: '', text: 'No area'})]
-                .concat(areas.map(function (ar) {
-                    return h('option', {
-                        value: String(ar.id), text: ar.name,
-                        selected: isEdit && String(existing.area_id) === String(ar.id)
-                    });
-                }))
-                .concat([h('option', {value: '__new', text: '+ New area…'})]));
+            var area = areaPicker(isEdit ? existing.area_name : null);
 
-            var newArea = h('input', {class: 'trek-input', placeholder: 'Kyoto, Day 3, …'});
-            var newAreaWrap = h('div', {style: 'display:none;margin-top:6px'}, [newArea]);
-
-            areaSelect.addEventListener('change', function () {
-                var isNew = areaSelect.value === '__new';
-                newAreaWrap.style.display = isNew ? 'block' : 'none';
-                if (isNew) newArea.focus();
-            });
-
+            // Area sits second, not last. A dropdown pinned to the bottom of a
+            // scrollable dialog opens into the clipped edge of it, and you have
+            // to scroll the dialog to read your own options.
             var fields = [
                 field('Title', titleInput),
+                area.field,
                 field('Notes', descInput),
-                field('Link', urlInput),
-                h('div', {class: 'field'}, [
-                    h('label', {class: 'trek-label', text: 'Area'}),
-                    areaSelect,
-                    newAreaWrap,
-                    h('span', {class: 'hint', text: 'A label to group proposals by — a city, a day. Not a map location.'})
-                ])
+                field('Link', urlInput)
             ];
 
             modal(isEdit ? 'Edit proposal' : 'Propose an activity', fields, isEdit ? 'Save' : 'Propose', function (close) {
@@ -1656,7 +1688,7 @@
                     return;
                 }
 
-                return resolveArea().then(function (areaId) {
+                return area.resolve().then(function (areaId) {
                     var payload = {
                         title: title,
                         description: descInput.value.trim(),
@@ -1676,16 +1708,104 @@
                 });
             });
 
-            function resolveArea() {
-                if (areaSelect.value !== '__new') {
-                    return Promise.resolve(areaSelect.value ? parseInt(areaSelect.value, 10) : null);
-                }
-                var name = newArea.value.trim();
-                if (!name) return Promise.resolve(null);
-                return api('/areas', 'POST', {name: name, trip_id: S.tripId}).then(function (ar) { return ar.id; });
+            setTimeout(function () { titleInput.focus(); titleInput.select(); }, 60);
+        }
+
+        /**
+         * One field that both picks an existing area and creates a new one.
+         *
+         * It replaces a <select> plus a hidden "+ New area…" input, for two
+         * reasons. A native-style dropdown at the foot of a scrollable dialog
+         * opens into the clipped edge of it — you end up scrolling the dialog to
+         * read the list you just opened. And with a dozen areas a flat select is
+         * a scroll of its own: typing two letters beats hunting.
+         *
+         * Suggestions render IN FLOW, never as a floating layer, so there is
+         * nothing that can be clipped by an ancestor's overflow.
+         */
+        function areaPicker(currentName) {
+            var areas = (S.board.areas || []).slice()
+                .sort(function (x, y) { return x.name.localeCompare(y.name); });
+
+            var input = h('input', {
+                class: 'trek-input',
+                value: currentName || '',
+                placeholder: areas.length ? 'Type to find or create — Kyoto, Day 3…' : 'Kyoto, Day 3, …',
+                autocomplete: 'off',
+                'aria-label': 'Area'
+            });
+
+            var list = h('div', {class: 'suggest'});
+
+            function exact(name) {
+                var n = name.trim().toLowerCase();
+                if (!n) return null;
+                return areas.filter(function (a) { return a.name.toLowerCase() === n; })[0] || null;
             }
 
-            setTimeout(function () { titleInput.focus(); titleInput.select(); }, 60);
+            function draw() {
+                clear(list);
+                var q = input.value.trim().toLowerCase();
+                var hits = (q
+                    ? areas.filter(function (a) { return a.name.toLowerCase().indexOf(q) >= 0; })
+                    : areas).slice(0, 6);
+
+                hits.forEach(function (a) {
+                    list.appendChild(h('button', {
+                        class: 'suggest-item' + (a.name.toLowerCase() === q ? ' on' : ''),
+                        type: 'button',
+                        text: a.name,
+                        on: {
+                            click: function () {
+                                input.value = a.name;
+                                draw();
+                                input.focus();
+                            }
+                        }
+                    }));
+                });
+
+                // Say that submitting as-is would create something — but not
+                // while the text is still a prefix of an area that exists, when
+                // the person is plainly mid-way through typing that one.
+                var typed = input.value.trim();
+                var startsAnExisting = !!q && areas.some(function (a) { return a.name.toLowerCase().indexOf(q) === 0; });
+                if (typed && !exact(typed) && !startsAnExisting) {
+                    list.appendChild(h('span', {class: 'suggest-new', text: 'New area: ' + typed}));
+                }
+                if (!hits.length && !typed && areas.length) {
+                    list.appendChild(h('span', {class: 'suggest-new', text: 'No areas yet'}));
+                }
+            }
+
+            input.addEventListener('input', draw);
+            input.addEventListener('focus', draw);
+            draw();
+
+            var fieldEl = h('div', {class: 'field'}, [
+                h('label', {class: 'trek-label', text: 'Area'}),
+                input,
+                list,
+                h('span', {
+                    class: 'hint',
+                    text: 'A label to group proposals by — a city, a day. Not a map location. Leave it empty for none.'
+                })
+            ]);
+
+            return {
+                field: fieldEl,
+                // An exact match reuses that area; anything else is created.
+                // POST /areas is idempotent — it hands back the existing row on a
+                // name clash — so a race with another member cannot duplicate.
+                resolve: function () {
+                    var typed = input.value.trim();
+                    if (!typed) return Promise.resolve(null);
+                    var hit = exact(typed);
+                    if (hit) return Promise.resolve(hit.id);
+                    return api('/areas', 'POST', {name: typed, trip_id: S.tripId})
+                        .then(function (ar) { return ar.id; });
+                }
+            };
         }
 
         // ---- add to trip -----------------------------------------------------
