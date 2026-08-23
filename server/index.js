@@ -823,6 +823,13 @@ const routes = [
         handler: wrapHandler(async (req, ctx) => {
             const activity = await loadActivityForUser(ctx, req.query && req.query.id);
 
+            // Seul l'auteur retire sa proposition : une suppression emporte aussi
+            // tous les votes déjà reçus, et l'accès au voyage ne suffit pas pour ça.
+            // L'édition, elle, reste ouverte à tous les membres.
+            if (String(activity.created_by) !== String(req.user.id)) {
+                throw httpError(403, 'Only the member who proposed this activity can delete it');
+            }
+
             ctx.log.info('Deleting activity', {activityId: activity.id, userId: req.user.id});
 
             const placeId = activity.place_id;
