@@ -986,11 +986,41 @@
                 'stroke-linecap="round" stroke-linejoin="round"' + (cls ? ' class="' + cls + '"' : '') + '>' + (ICON[name] || '') + '</svg>';
         }
 
+        // L'apostrophe DOIT être échappée : esc() alimente aussi des attributs
+        // et du texte qui finissent dans du HTML construit par concaténation.
         function esc(s) {
-            return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-                return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c];
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
             });
         }
+
+        // Seuls http(s) sont affichables comme lien : une URL javascript: ou data:
+        // stockée dans une activité ne doit jamais devenir cliquable.
+        function safeUrl(u) {
+            var raw = String(u == null ? '' : u).trim();
+            if (!raw) return null;
+            return /^https?:\/\//i.test(raw) ? raw : null;
+        }
+
+        // La frame sandboxée ne peut pas ouvrir d'onglet elle-même : c'est l'hôte
+        // qui le fait, sur demande explicite.
+        function openExternal(url) {
+            var safe = safeUrl(url);
+            if (!safe) {
+                notify('warning', 'This link cannot be opened');
+                return;
+            }
+            post({type: 'trek:openExternal', url: safe});
+        }
+
+        // Délégation : les liens sont rendus en data-attribut, jamais en onclick
+        // inline (un onclick concaténé est une injection de code, pas de texte).
+        document.addEventListener('click', function (e) {
+            var target = e.target && e.target.closest ? e.target.closest('[data-open-url]') : null;
+            if (!target) return;
+            e.preventDefault();
+            openExternal(target.getAttribute('data-open-url'));
+        });
 
         // ---- state ------------------------------------------------------------
         var booted = false, current = null;
@@ -1102,19 +1132,24 @@
         }
 
         // ---- data loading ------------------------------------------------------
+        // Toutes les routes sont scopées au voyage et refusent une requête sans
+        // tripId — inutile (et trompeur) de les appeler avant d'avoir le contexte.
+        function hasTrip() {
+            return state.currentTripId != null && state.currentTripId !== '';
+        }
+
         function loadData() {
-            // Use tripId from context
-            var tripId = state.currentTripId ? '?tripId=' + state.currentTripId : '';
+            if (!hasTrip()) return Promise.resolve();
 
-            return invoke('/clean-orphaned-places', 'POST', { tripId: state.currentTripId })
-                .then(function(cleanResult) {
-                    console.log('🧹 Cleaning orphaned places:', cleanResult);
+            var q = '?tripId=' + encodeURIComponent(state.currentTripId);
 
-                    // Then load data
+            return invoke('/clean-orphaned-places', 'POST', {tripId: state.currentTripId})
+                .catch(function () { /* le nettoyage est opportuniste, jamais bloquant */ })
+                .then(function () {
                     return Promise.all([
-                        invoke('/activities' + tripId, 'GET').catch(function () { return []; }),
-                        invoke('/stats' + tripId, 'GET').catch(function () { return []; }),
-                        invoke('/places' + tripId, 'GET').catch(function () { return []; })
+                        invoke('/activities' + q, 'GET').catch(function () { return []; }),
+                        invoke('/stats' + q, 'GET').catch(function () { return []; }),
+                        invoke('/places' + q, 'GET').catch(function () { return []; })
                     ]);
                 })
                 .then(function (results) {
@@ -1129,64 +1164,21 @@
                     });
                     return Promise.all(promises);
                 });
+        }
 
-            // First, synchronize members
-            return invoke('/sync-trip-members', 'POST', { tripId: state.currentTripId })
-                .then(function(syncResult) {
-                    console.log('👥 Members synchronized:', syncResult);
-
-                    // Then load data
-                    return Promise.all([
-                        invoke('/activities' + tripId, 'GET').catch(function () { return []; }),
-                        invoke('/stats' + tripId, 'GET').catch(function () { return []; }),
-                        invoke('/places' + tripId, 'GET').catch(function () { return []; })
-                    ]);
-                })
-                .then(function (results) {
-                    state.activities = results[0] || [];
-                    state.stats = results[1] || [];
-                    state.places = results[2] || [];
-                    state.votes = {};
-                    var promises = state.activities.map(function (a) {
-                        return invoke('/votes?activityId=' + a.id, 'GET')
-                            .then(function (votes) { state.votes[a.id] = votes || []; })
-                            .catch(function () { state.votes[a.id] = []; });
-                    });
-                    return Promise.all(promises);
-                });
-
-            return Promise.all([
-                invoke('/activities' + tripId, 'GET').catch(function () {
-                    return [];
-                }),
-                invoke('/stats' + tripId, 'GET').catch(function () {
-                    return [];
-                }),
-                invoke('/places' + tripId, 'GET').catch(function () {
-                    return [];
-                })
-            ]).then(function (results) {
-                state.activities = results[0] || [];
-                state.stats = results[1] || [];
-                state.places = results[2] || [];
-                state.votes = {};
-                var promises = state.activities.map(function (a) {
-                    return invoke('/votes?activityId=' + a.id, 'GET')
-                        .then(function (votes) {
-                            state.votes[a.id] = votes || [];
-                        })
-                        .catch(function () {
-                            state.votes[a.id] = [];
-                        });
-                });
-                return Promise.all(promises);
-            });
+        function renderNoTrip(panel) {
+            panel.innerHTML = '<div class="empty-state">' +
+                '<div class="icon">🧭</div>' +
+                '<div style="font-size:16px;font-weight:600;margin-bottom:4px">No trip context</div>' +
+                '<div class="muted">Open Vox from inside a trip to vote on its activities.</div>' +
+                '</div>';
         }
 
         // ---- sections ---------------------------------------------------------
         var SECTIONS = {};
 
         SECTIONS.activities = function (panel) {
+            if (!hasTrip()) return Promise.resolve(renderNoTrip(panel));
             return loadData().then(function () {
                 renderActivities(panel);
             });
@@ -1198,6 +1190,15 @@
                 return String(p.id) === String(placeId);
             });
             return place ? place.name || place.title || 'Place ' + placeId : 'Unknown place';
+        }
+
+        // total_members vaut 0 quand l'hôte n'a pas pu livrer le roster du voyage.
+        // Dans ce cas on affiche l'inconnu plutôt qu'un pourcentage inventé.
+        function participationLabel(stats, voteCount) {
+            var total = stats ? stats.total_members || 0 : 0;
+            if (!total) return '👥 — participation (' + voteCount + ' voted)';
+            var pct = stats ? stats.participation || 0 : 0;
+            return '👥 ' + pct + '% participation (' + voteCount + '/' + total + ')';
         }
 
         function renderActivities(panel) {
@@ -1241,12 +1242,13 @@
                     var stats = state.stats.find(function (s) {
                         return s.id === activity.id;
                     });
+                    // Les ids arrivent en string dans le contexte, la colonne
+                    // user_id est TEXT : on compare des String des deux côtés.
                     var userVote = votes.find(function (v) {
-                        return v.user_id === ctx.userId;
+                        return String(v.user_id) === String(ctx.userId);
                     });
                     var avgScore = stats ? parseFloat(stats.avg_score || 0) : 0;
                     var consensus = stats ? stats.consensus || 0 : 0;
-                    var participation = stats ? stats.participation || 0 : 0;
                     var placeName = activity.place_id ? getPlaceName(activity.place_id) : '';
 
                     html += '<div class="card" data-activity="' + activity.id + '">' +
@@ -1267,18 +1269,9 @@
                     if (activity.description) {
                         html += '<div class="muted" style="font-size:13px;margin-top:4px">' + esc(activity.description) + '</div>';
                     }
-                    if (activity.url) {
-                        html += '<div style="margin-top:4px"><a href="' + esc(activity.url) + '" target="_self" style="color:var(--accent);font-size:12px" onclick="event.preventDefault(); window.open(\'' + esc(activity.url) + '\', \'_blank\')">🔗 Link</a></div>';
-                    }
-
-                    if (filtered.length > 0) {
-                        // Get total members from stats
-                        var totalMembers = state.stats.length > 0 ? state.stats[0].total_members || 0 : 0;
-
-                        // Display indicator at top
-                        /*html += '<div class="filter-bar" style="justify-content:flex-end">' +
-                            '<span class="chip">👥 ' + totalMembers + ' members in trip</span>' +
-                            '</div>';*/
+                    var activityUrl = safeUrl(activity.url);
+                    if (activityUrl) {
+                        html += '<div style="margin-top:4px"><a href="#" data-open-url="' + esc(activityUrl) + '" style="color:var(--accent);font-size:12px">🔗 Link</a></div>';
                     }
 
                     html += '<div class="row" style="margin-top:8px">' +
@@ -1291,7 +1284,7 @@
                         '<span style="font-size:13px;color:var(--text-muted)">' + avgScore.toFixed(1) + '</span>' +
                         '</div>' +
                         '<div class="row" style="margin-top:4px;gap:12px;font-size:11px;color:var(--text-muted)">' +
-                        '<span>👥 ' + participation + '% participation (' + votes.length + '/' + (stats ? stats.total_members || 0 : 0) + ')</span>' +
+                        '<span>' + esc(participationLabel(stats, votes.length)) + '</span>' +
                         '<span>📊 ' + votes.length + ' votes</span>' +
                         '</div>' +
                         '<div class="progress"><span style="width:' + consensus + '%"></span></div>';
@@ -1399,12 +1392,16 @@
 
         // ---- Vote -------------------------------------------------------------
         function vote(activityId, score, panel) {
-            var tripId = state.currentTripId ? '?tripId=' + state.currentTripId : '';
+            if (!hasTrip()) {
+                notify('error', 'No trip selected');
+                return;
+            }
+            var q = '?tripId=' + encodeURIComponent(state.currentTripId);
             invoke('/vote', 'POST', {activityId: activityId, score: score})
                 .then(function () {
                     return Promise.all([
                         invoke('/votes?activityId=' + activityId, 'GET'),
-                        invoke('/stats' + tripId, 'GET')
+                        invoke('/stats' + q, 'GET')
                     ]);
                 })
                 .then(function (results) {
@@ -1420,6 +1417,7 @@
 
         // ---- Ranking section -------------------------------------------------
         SECTIONS.ranking = function (panel) {
+            if (!hasTrip()) return Promise.resolve(renderNoTrip(panel));
             return loadData().then(function () {
                 renderRanking(panel);
             });
@@ -1478,7 +1476,7 @@
                     var medal = medals[i] || '#' + (i + 1);
                     var avg = stats ? parseFloat(stats.avg_score || 0) : 0;
                     var consensus = stats ? stats.consensus || 0 : 0;
-                    var participation = stats ? stats.participation || 0 : 0;
+                    var voteCount = stats ? stats.vote_count || 0 : 0;
                     var placeName = activity.place_id ? getPlaceName(activity.place_id) : '';
                     var hasTrekPlace = activity.trek_place_id ? true : false;
 
@@ -1502,8 +1500,8 @@
                         '</div>' +
                         '</div>' +
                         '<div class="row" style="margin-top:4px;gap:12px;font-size:11px;color:var(--text-muted)">' +
-                        '<span>👥 ' + participation + '% participation</span>' +
-                        '<span>📊 ' + (stats ? stats.vote_count || 0 : 0) + ' votes</span>' +
+                        '<span>' + esc(participationLabel(stats, voteCount)) + '</span>' +
+                        '<span>📊 ' + voteCount + ' votes</span>' +
                         /*'<span class="chip" style="font-size:10px">👤 ' + (stats ? stats.total_members || 0 : 0) + ' members</span>' +*/
                         '</div>' +
                         '<div class="progress"><span style="width:' + consensus + '%"></span></div>' +
@@ -1873,13 +1871,6 @@
                 booted = true;
                 boot();
             }
-
-            // Call debug route
-            /*invoke('/debug?tripId=' + state.currentTripId, 'GET')
-                .then(data => {
-                    console.log('🔍 DEBUG COMPLET:', data);
-                })
-                .catch(err => console.error('❌ Error:', err));*/
         }, 800);
     })();
 </script>
