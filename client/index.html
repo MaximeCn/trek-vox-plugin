@@ -1250,9 +1250,10 @@
                     var avgScore = stats ? parseFloat(stats.avg_score || 0) : 0;
                     var consensus = stats ? stats.consensus || 0 : 0;
                     var placeName = activity.place_id ? getPlaceName(activity.place_id) : '';
-                    // Le serveur n'autorise la suppression qu'à l'auteur : ne pas
-                    // proposer aux autres un bouton qui répondrait 403.
-                    var isMine = String(activity.created_by) === String(ctx.userId);
+                    // can_delete est calculé par le serveur (auteur, propriétaire du
+                    // voyage, ou proposition orpheline) : ne pas rejouer la règle ici,
+                    // et ne pas proposer un bouton qui répondrait 403.
+                    var canDelete = !!activity.can_delete;
 
                     html += '<div class="card" data-activity="' + activity.id + '">' +
                         '<div class="between">' +
@@ -1261,8 +1262,8 @@
                         (placeName ? ' <span class="chip" style="font-size:10px">📍 ' + esc(placeName) + '</span>' : '') +
                         '<span class="action-buttons">' +
                         '<button class="btn-edit" data-edit="' + activity.id + '" title="Edit activity">' + svg('edit') + '</button>' +
-                        (isMine
-                            ? '<button class="btn-delete" data-delete="' + activity.id + '" title="Delete your proposal">' + svg('trash') + '</button>'
+                        (canDelete
+                            ? '<button class="btn-delete" data-delete="' + activity.id + '" title="Delete this proposal">' + svg('trash') + '</button>'
                             : '') +
                         '</span>' +
                         '</div>' +

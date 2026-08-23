@@ -78,7 +78,9 @@ async function assertTripAccess(ctx, tripId) {
         throw httpError(403, 'Trip not accessible');
     }
     if (!trip) throw httpError(403, 'Trip not accessible');
-    return id;
+    // La ligne trips complète, pour que l'appelant qui a besoin du propriétaire
+    // (trips.user_id) n'ait pas à refaire la lecture.
+    return {...trip, id: id};
 }
 
 /** Charge une activité et vérifie que l'appelant a accès à SON voyage. */
@@ -87,8 +89,8 @@ async function loadActivityForUser(ctx, activityId) {
     if (!id) throw httpError(400, 'activityId required');
     const rows = await ctx.db.query('SELECT * FROM activities WHERE id = ?', [id]);
     if (!rows.length) throw httpError(404, 'Activity not found');
-    await assertTripAccess(ctx, rows[0].trip_id);
-    return rows[0];
+    const trip = await assertTripAccess(ctx, rows[0].trip_id);
+    return {activity: rows[0], trip: trip};
 }
 
 /** Un lieu Vox ne peut être rattaché qu'à une activité du même voyage. */
@@ -101,23 +103,52 @@ async function resolvePlaceInTrip(ctx, placeId, tripId) {
 }
 
 /**
- * Le vrai effectif du voyage.
+ * Les ids des membres du voyage, en Set de String — ou null si l'hôte ne sait
+ * pas répondre.
  *
  * ctx.trips.getById renvoie la ligne `trips` brute (SELECT * FROM trips) : elle
  * ne porte AUCUN tableau `members`. Le roster s'obtient uniquement via
  * ctx.trips.members(), qui roule sur la même permission db:read:trips.
- * Retourne 0 si l'hôte ne sait pas répondre — l'appelant expose alors une
- * participation inconnue plutôt qu'un pourcentage inventé.
+ * On distingue « roster vide » de « roster inconnu » : les appelants n'en
+ * tirent pas les mêmes conclusions.
  */
-async function getTripMemberCount(ctx, tripId) {
-    if (!tripId) return 0;
+async function getTripMemberIds(ctx, tripId) {
+    if (!tripId) return null;
     try {
-        const members = await ctx.trips.members(tripId);
-        return Array.isArray(members) ? members.length : 0;
+        const roster = await ctx.trips.members(tripId);
+        if (!Array.isArray(roster)) return null;
+        return new Set(roster.map(m => String(m && m.id)));
     } catch (e) {
         ctx.log.warn('Could not read trip roster', {tripId, error: e && e.message});
-        return 0;
+        return null;
     }
+}
+
+/** Retourne 0 si l'effectif est inconnu — l'appelant expose alors une
+ *  participation inconnue plutôt qu'un pourcentage inventé. */
+async function getTripMemberCount(ctx, tripId) {
+    const ids = await getTripMemberIds(ctx, tripId);
+    return ids ? ids.size : 0;
+}
+
+/**
+ * Qui peut retirer une proposition.
+ *
+ * 1. Le créateur du voyage : il a tous les droits sur son voyage.
+ * 2. L'auteur de la proposition : une suppression emporte aussi tous les votes
+ *    reçus, donc le simple accès au voyage ne suffit pas — mais retirer sa
+ *    propre proposition, oui.
+ * 3. N'importe quel membre, si l'auteur a quitté le voyage : sans cette règle
+ *    une proposition orpheline resterait indéletable pour tout le monde.
+ *
+ * Roster inconnu => on s'en tient à 1 et 2 : on ne devine pas un droit de
+ * suppression sur la proposition de quelqu'un d'autre.
+ */
+function mayDelete(activity, actingUserId, trip, memberIds) {
+    if (trip && trip.user_id != null && String(trip.user_id) === String(actingUserId)) return true;
+    if (String(activity.created_by) === String(actingUserId)) return true;
+    if (!memberIds) return false;
+    return !memberIds.has(String(activity.created_by));
 }
 
 function participationPct(voteCount, totalMembers) {
@@ -188,7 +219,7 @@ const routes = [
         path: '/places',
         auth: true,
         handler: wrapHandler(async (req, ctx) => {
-            const tripId = await assertTripAccess(ctx, req.query && req.query.tripId);
+            const tripId = (await assertTripAccess(ctx, req.query && req.query.tripId)).id;
 
             ctx.log.info('Fetching places from plugin database', {tripId});
 
@@ -211,7 +242,7 @@ const routes = [
         path: '/trip-members',
         auth: true,
         handler: wrapHandler(async (req, ctx) => {
-            const tripId = await assertTripAccess(ctx, req.query && req.query.tripId);
+            const tripId = (await assertTripAccess(ctx, req.query && req.query.tripId)).id;
 
             ctx.log.info('Fetching trip members', {tripId});
 
@@ -244,7 +275,7 @@ const routes = [
                 return json(400, {error: 'Place name is required'});
             }
 
-            const tripId = await assertTripAccess(ctx, body.trip_id);
+            const tripId = (await assertTripAccess(ctx, body.trip_id)).id;
 
             ctx.log.info('Creating place', {name, tripId, userId: req.user.id});
 
@@ -276,7 +307,7 @@ const routes = [
             const {voxActivityId, activityName, notes, address, website, lat, lng} = body;
 
             // Charge l'activité ET vérifie l'accès à son voyage
-            const activity = await loadActivityForUser(ctx, voxActivityId);
+            const {activity} = await loadActivityForUser(ctx, voxActivityId);
             const tripId = activity.trip_id;
 
             let placeName = '';
@@ -411,7 +442,7 @@ const routes = [
         auth: true,
         handler: wrapHandler(async (req, ctx) => {
             const body = await readBody(req);
-            const tripId = await assertTripAccess(ctx, body.tripId);
+            const tripId = (await assertTripAccess(ctx, body.tripId)).id;
 
             const results = {cleaned: 0, kept: 0, errors: [], details: []};
 
@@ -468,10 +499,15 @@ const routes = [
         path: '/activities',
         auth: true,
         handler: wrapHandler(async (req, ctx) => {
-            const tripId = await assertTripAccess(ctx, req.query && req.query.tripId);
+            const trip = await assertTripAccess(ctx, req.query && req.query.tripId);
+            const tripId = trip.id;
             const placeId = req.query && req.query.placeId ? req.query.placeId : null;
 
             ctx.log.info('Fetching activities', {tripId});
+
+            // Un seul appel roster pour toutes les lignes : le client ne rejoue
+            // pas la règle de suppression, il lit le can_delete qu'on calcule ici.
+            const memberIds = await getTripMemberIds(ctx, tripId);
 
             let sql = `SELECT a.*,
                         (SELECT COUNT(*) FROM votes v WHERE v.activity_id = a.id) as vote_count,
@@ -507,7 +543,8 @@ const routes = [
                 return {
                     ...activity,
                     creator_name: creatorName,
-                    creator_display_name: creatorName
+                    creator_display_name: creatorName,
+                    can_delete: mayDelete(activity, req.user.id, trip, memberIds)
                 };
             }));
 
@@ -528,7 +565,7 @@ const routes = [
                 return json(400, {error: 'Title is required'});
             }
 
-            const tripId = await assertTripAccess(ctx, body.trip_id);
+            const tripId = (await assertTripAccess(ctx, body.trip_id)).id;
             const placeId = await resolvePlaceInTrip(ctx, body.place_id, tripId);
 
             ctx.log.info('Creating activity', {title, tripId, userId: req.user.id, placeId});
@@ -550,7 +587,7 @@ const routes = [
         path: '/votes',
         auth: true,
         handler: wrapHandler(async (req, ctx) => {
-            const activity = await loadActivityForUser(ctx, getActivityIdFromQuery(req));
+            const {activity} = await loadActivityForUser(ctx, getActivityIdFromQuery(req));
 
             const votes = await ctx.db.query(
                 `SELECT v.*
@@ -598,7 +635,7 @@ const routes = [
                 return json(400, {error: 'Invalid vote data: activityId and an integer score (1-5) required'});
             }
 
-            const activity = await loadActivityForUser(ctx, body.activityId);
+            const {activity} = await loadActivityForUser(ctx, body.activityId);
 
             ctx.log.info('Submitting vote', {activityId: activity.id, score, userId: req.user.id});
 
@@ -645,7 +682,7 @@ const routes = [
         path: '/trip-member-count',
         auth: true,
         handler: wrapHandler(async (req, ctx) => {
-            const tripId = await assertTripAccess(ctx, req.query && req.query.tripId);
+            const tripId = (await assertTripAccess(ctx, req.query && req.query.tripId)).id;
 
             ctx.log.info('Fetching trip member count', {tripId});
 
@@ -662,7 +699,7 @@ const routes = [
         path: '/stats',
         auth: true,
         handler: wrapHandler(async (req, ctx) => {
-            const tripId = await assertTripAccess(ctx, req.query && req.query.tripId);
+            const tripId = (await assertTripAccess(ctx, req.query && req.query.tripId)).id;
             const placeId = req.query && req.query.placeId ? req.query.placeId : null;
 
             ctx.log.info('Fetching stats', {tripId});
@@ -724,7 +761,7 @@ const routes = [
             }
 
             // Charge l'activité ET vérifie l'accès à son voyage
-            const existing = await loadActivityForUser(ctx, id);
+            const {activity: existing} = await loadActivityForUser(ctx, id);
             const tripId = existing.trip_id;
 
             // Une activité ne change jamais de voyage : un trip_id différent dans
@@ -771,7 +808,7 @@ const routes = [
         auth: true,
         handler: wrapHandler(async (req, ctx) => {
             const body = await readBody(req);
-            const tripId = await assertTripAccess(ctx, body.tripId);
+            const tripId = (await assertTripAccess(ctx, body.tripId)).id;
 
             ctx.log.info('Syncing trip members', {tripId});
 
@@ -821,13 +858,13 @@ const routes = [
         path: '/activities',
         auth: true,
         handler: wrapHandler(async (req, ctx) => {
-            const activity = await loadActivityForUser(ctx, req.query && req.query.id);
+            const {activity, trip} = await loadActivityForUser(ctx, req.query && req.query.id);
 
-            // Seul l'auteur retire sa proposition : une suppression emporte aussi
-            // tous les votes déjà reçus, et l'accès au voyage ne suffit pas pour ça.
-            // L'édition, elle, reste ouverte à tous les membres.
-            if (String(activity.created_by) !== String(req.user.id)) {
-                throw httpError(403, 'Only the member who proposed this activity can delete it');
+            // L'édition reste ouverte à tous les membres ; la suppression, non —
+            // elle emporte aussi tous les votes déjà reçus. Voir mayDelete().
+            const memberIds = await getTripMemberIds(ctx, activity.trip_id);
+            if (!mayDelete(activity, req.user.id, trip, memberIds)) {
+                throw httpError(403, 'Only the member who proposed this activity, or the trip owner, can delete it');
             }
 
             ctx.log.info('Deleting activity', {activityId: activity.id, userId: req.user.id});
